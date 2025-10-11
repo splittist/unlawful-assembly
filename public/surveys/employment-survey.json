@@ -1,0 +1,48 @@
+{
+  "title": "Employment Agreement Information",
+  "description": "Collect information for generating employment documents",
+  "pages": [
+    {
+      "name": "employee_info",
+      "elements": [
+        {
+          "type": "text",
+          "name": "employeeName",
+          "title": "Employee Full Name",
+          "isRequired": true
+        },
+        {
+          "type": "text",
+          "name": "position",
+          "title": "Job Title",
+          "isRequired": true
+        },
+        {
+          "type": "text",
+          "name": "salary",
+          "title": "Annual Salary ($)",
+          "inputType": "number",
+          "isRequired": true
+        },
+        {
+          "type": "text",
+          "name": "startDate",
+          "title": "Start Date",
+          "inputType": "date",
+          "isRequired": true
+        },
+        {
+          "type": "radiogroup",
+          "name": "employmentType",
+          "title": "Employment Type",
+          "isRequired": true,
+          "choices": [
+            {"value": "full-time", "text": "Full-time"},
+            {"value": "part-time", "text": "Part-time"},
+            {"value": "contract", "text": "Contract"}
+          ]
+        }
+      ]
+    }
+  ]
+}

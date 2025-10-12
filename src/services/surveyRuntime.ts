@@ -8,13 +8,15 @@ export class SurveyRuntimeService {
   private surveyModel: any = null;
   private container: HTMLElement | null = null;
   private currentSurvey: SurveyDefinition | null = null;
+  private onCompleteCallback: ((data: any) => void) | null = null;
 
   /**
    * Initialize the Survey.js runtime
    */
-  initialize(container: HTMLElement, surveyJson: SurveyDefinition): void {
+  initialize(container: HTMLElement, surveyJson: SurveyDefinition, onComplete?: (data: any) => void): void {
     this.container = container;
     this.currentSurvey = surveyJson;
+    this.onCompleteCallback = onComplete || null;
     
     // For Phase 1, create a simple form renderer
     this.renderSimpleForm(container, surveyJson);
@@ -249,8 +251,13 @@ export class SurveyRuntimeService {
     
     console.log('Survey completed with data:', data);
     
-    // For Phase 1, just show a success message
-    this.showCompletionMessage(data);
+    // Call completion callback if provided (Phase 2)
+    if (this.onCompleteCallback) {
+      this.onCompleteCallback(data);
+    } else {
+      // For Phase 1, just show a success message
+      this.showCompletionMessage(data);
+    }
   }
 
   /**

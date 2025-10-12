@@ -1,8 +1,9 @@
 import './style.css';
 import { DomUtils } from '@/utils/common';
 import { DocxParserService, type DocxParseResult } from '@/services/docxParser';
-import { FieldMappingService, type FieldMapping } from '@/services/fieldMapping';
+import { FieldMappingService } from '@/services/fieldMapping';
 import { PackageService, type PackageContent } from '@/services/packageService';
+import { SurveyCreatorService } from '@/services/surveyCreator';
 
 /**
  * Creator interface main entry point
@@ -11,11 +12,13 @@ import { PackageService, type PackageContent } from '@/services/packageService';
 class CreatorApp {
   private container: HTMLElement;
   private mappingService: FieldMappingService;
+  private surveyCreatorService: SurveyCreatorService;
   private currentPackage: PackageContent | null = null;
 
   constructor() {
     this.container = document.querySelector<HTMLDivElement>('#creator-app')!;
     this.mappingService = new FieldMappingService();
+    this.surveyCreatorService = new SurveyCreatorService();
     this.init();
   }
 
@@ -174,14 +177,27 @@ class CreatorApp {
     const downloadBtn = container.querySelector('#download-survey-btn');
     const creatorContainer = container.querySelector('#survey-creator-container')!;
 
+    // Initialize the SurveyCreatorService with the container
+    this.surveyCreatorService.initialize(creatorContainer as HTMLElement);
+
+    // Enable buttons now that service is initialized
+    if (previewBtn) {
+      (previewBtn as HTMLButtonElement).disabled = false;
+      previewBtn.classList.remove('bg-gray-300', 'text-gray-700');
+      previewBtn.classList.add('bg-green-600', 'text-white', 'hover:bg-green-700');
+    }
+    if (downloadBtn) {
+      (downloadBtn as HTMLButtonElement).disabled = false;
+    }
+
     newSurveyBtn?.addEventListener('click', () => {
-      this.createNewSurvey(creatorContainer as HTMLElement);
+      this.createNewSurvey();
     });
 
     loadSurveyInput?.addEventListener('change', (e) => {
       const file = (e.target as HTMLInputElement).files?.[0];
       if (file) {
-        this.loadSurveyFile(file, creatorContainer as HTMLElement);
+        this.loadSurveyFile(file);
       }
     });
 
@@ -191,7 +207,7 @@ class CreatorApp {
       'Load Sample Survey'
     );
     loadSampleBtn.addEventListener('click', () => {
-      this.loadSampleSurvey(creatorContainer as HTMLElement);
+      this.loadSampleSurvey();
     });
     container.querySelector('.mb-6')?.appendChild(loadSampleBtn);
 
@@ -204,31 +220,17 @@ class CreatorApp {
     });
   }
 
-  private createNewSurvey(container: HTMLElement): void {
-    // For Phase 1, create a simple form builder
-    const sampleSurvey = {
-      title: 'New Survey',
-      description: 'Created with Document Assembly Tool',
-      pages: [
-        {
-          name: 'page1',
-          elements: [
-            {
-              type: 'text',
-              name: 'sample_field',
-              title: 'Sample Text Field',
-              isRequired: true
-            }
-          ]
-        }
-      ]
-    };
-
-    this.displaySurveyPreview(sampleSurvey, container);
-    this.enableSurveyActions();
+  private createNewSurvey(): void {
+    try {
+      this.surveyCreatorService.createNewSurvey();
+      this.showNotification('New survey created', 'success');
+    } catch (error) {
+      console.error('Error creating new survey:', error);
+      this.showNotification('Failed to create new survey', 'error');
+    }
   }
 
-  private async loadSurveyFile(file: File, container: HTMLElement): Promise<void> {
+  private async loadSurveyFile(file: File): Promise<void> {
     try {
       const content = await new Promise<string>((resolve, reject) => {
         const reader = new FileReader();
@@ -238,72 +240,31 @@ class CreatorApp {
       });
 
       const survey = JSON.parse(content);
-      this.displaySurveyPreview(survey, container);
-      this.enableSurveyActions();
+      this.surveyCreatorService.loadSurvey(survey);
+      this.showNotification(`Survey loaded: ${survey.title || file.name}`, 'success');
     } catch (error) {
-      DomUtils.setErrorState(container, {
-        hasError: true,
-        message: 'Failed to load survey file',
-        details: error instanceof Error ? error.message : 'Unknown error'
-      });
-    }
-  }
-
-  private displaySurveyPreview(survey: any, container: HTMLElement): void {
-    container.innerHTML = `
-      <div class="p-6">
-        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-          <h3 class="font-medium text-blue-900">${survey.title}</h3>
-          <p class="text-sm text-blue-700 mt-1">${survey.description || 'No description'}</p>
-        </div>
-        <div class="space-y-4">
-          <h4 class="font-medium text-gray-900">Survey Structure:</h4>
-          ${survey.pages?.map((page: any, pageIndex: number) => `
-            <div class="border border-gray-200 rounded p-4">
-              <h5 class="font-medium text-gray-700">Page ${pageIndex + 1}: ${page.name}</h5>
-              <div class="mt-2 space-y-2">
-                ${page.elements?.map((element: any) => `
-                  <div class="bg-gray-50 p-2 rounded text-sm">
-                    <span class="font-medium">${element.name}</span> 
-                    <span class="text-gray-500">(${element.type})</span>
-                    ${element.title ? `- ${element.title}` : ''}
-                  </div>
-                `).join('') || '<div class="text-gray-500 text-sm">No questions</div>'}
-              </div>
-            </div>
-          `).join('') || '<div class="text-gray-500">No pages found</div>'}
-        </div>
-        <div class="mt-4 p-4 bg-gray-50 rounded">
-          <p class="text-sm text-gray-600">
-            <strong>Note:</strong> Full Survey.js Creator integration will be available in Phase 2. 
-            Currently showing survey structure preview.
-          </p>
-        </div>
-      </div>
-    `;
-  }
-
-  private enableSurveyActions(): void {
-    const previewBtn = this.container.querySelector('#preview-survey-btn') as HTMLButtonElement;
-    const downloadBtn = this.container.querySelector('#download-survey-btn') as HTMLButtonElement;
-    
-    if (previewBtn) {
-      previewBtn.disabled = false;
-      previewBtn.classList.remove('bg-gray-300', 'text-gray-700');
-      previewBtn.classList.add('bg-green-600', 'text-white', 'hover:bg-green-700');
-    }
-    
-    if (downloadBtn) {
-      downloadBtn.disabled = false;
+      console.error('Error loading survey file:', error);
+      this.showNotification('Failed to load survey file. Please check the file format.', 'error');
     }
   }
 
   private previewSurvey(): void {
-    alert('Survey preview will be available in Phase 2 with full Survey.js integration');
+    try {
+      this.surveyCreatorService.showPreview();
+    } catch (error) {
+      console.error('Error showing preview:', error);
+      this.showNotification('Preview functionality is provided by the Survey Designer interface', 'info');
+    }
   }
 
   private downloadSurvey(): void {
-    alert('Survey download will be available in Phase 2 with full Survey.js integration');
+    try {
+      this.surveyCreatorService.downloadSurvey();
+      this.showNotification('Survey downloaded successfully', 'success');
+    } catch (error) {
+      console.error('Error downloading survey:', error);
+      this.showNotification(`Failed to download survey: ${error}`, 'error');
+    }
   }
 
   private renderTemplateManager(container: HTMLElement): void {
@@ -2062,27 +2023,17 @@ List any requirements..."></textarea>
   }
 
   private importSurveyFromCreator(): void {
-    // This would get the current survey from the Survey Creator tab
-    // For now, using mock data
-    const mockSurvey = {
-      title: 'Employment Contract Survey',
-      description: 'Survey for collecting employment contract information',
-      pages: [{
-        name: 'page1',
-        elements: [
-          { type: 'text', name: 'employee_name', title: 'Full Name', isRequired: true },
-          { type: 'text', name: 'job_title', title: 'Job Title', isRequired: true },
-          { type: 'text', name: 'start_date', title: 'Start Date', isRequired: true },
-          { type: 'text', name: 'department', title: 'Department', isRequired: true },
-          { type: 'radiogroup', name: 'employment_type', title: 'Employment Type', 
-            choices: ['Full-time', 'Part-time', 'Contract'], isRequired: true }
-        ]
-      }]
-    };
-
-    if (this.currentPackage) {
-      this.currentPackage.survey = mockSurvey;
-      this.showNotification('Survey imported from Survey Designer', 'success');
+    try {
+      // Get the current survey from the Survey Creator service
+      const currentSurvey = this.surveyCreatorService.getSurveyJson();
+      
+      if (this.currentPackage) {
+        this.currentPackage.survey = currentSurvey;
+        this.showNotification('Survey imported from Survey Designer', 'success');
+      }
+    } catch (error) {
+      console.error('Error importing survey:', error);
+      this.showNotification('Failed to import survey from designer', 'error');
     }
   }
 
@@ -2096,31 +2047,22 @@ List any requirements..."></textarea>
     }
   }
 
-  private async loadSampleSurvey(container: HTMLElement): Promise<void> {
+  private async loadSampleSurvey(): Promise<void> {
     try {
-      DomUtils.setLoadingState(container, {
-        isLoading: true,
-        message: 'Loading sample survey...'
-      });
-
       const response = await fetch('/surveys/employment-survey.json');
       if (!response.ok) {
         throw new Error('Failed to load sample survey');
       }
       const survey = await response.json();
       
-      this.displaySurveyPreview(survey, container);
-      this.enableSurveyActions();
+      this.surveyCreatorService.loadSurvey(survey);
+      this.showNotification('Sample survey loaded successfully', 'success');
       
-      console.log('Phase 1 Deliverable: Successfully loaded survey in Creator interface!');
+      console.log('Phase 2 Deliverable: Successfully loaded survey using SurveyCreatorService!');
       
     } catch (error) {
       console.error('Error loading sample survey:', error);
-      DomUtils.setErrorState(container, {
-        hasError: true,
-        message: 'Failed to load sample survey',
-        details: 'This demo requires the sample survey file to demonstrate survey loading in creator mode.'
-      });
+      this.showNotification('Failed to load sample survey', 'error');
     }
   }
 }

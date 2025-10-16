@@ -1,7 +1,7 @@
 // Core application types based on PRD specifications
 
 export interface SurveyElement {
-  type: 'text' | 'comment' | 'boolean' | 'radiogroup' | 'dropdown' | 'html';
+  type: 'text' | 'comment' | 'boolean' | 'radiogroup' | 'dropdown' | 'html' | string;
   name: string;
   title?: string;
   isRequired?: boolean;
@@ -10,6 +10,9 @@ export interface SurveyElement {
   html?: string; // for 'html' type (fixed text with styling)
   placeholder?: string;
   defaultValue?: any;
+  inputType?: string; // for text inputs (e.g., 'number', 'date', 'email')
+  // Survey.js supports many more properties - allow them
+  [key: string]: any;
 }
 
 export interface SurveyPage {

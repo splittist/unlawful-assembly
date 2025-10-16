@@ -1,42 +1,23 @@
 import 'survey-core/defaultV2.min.css';
-import 'survey-creator-core/survey-creator-core.min.css';
 
-import { SurveyCreatorModel } from 'survey-creator-core';
-import { Model, surveyLocalization } from 'survey-core';
+import { Model } from 'survey-core';
 import type { SurveyDefinition, SurveyElement } from '@/types';
 import { FileUtils, DateUtils } from '@/utils/common';
 
 /**
- * Survey.js Creator integration service for Phase 2
- * Handles the full survey designer interface and JSON generation
+ * Lightweight survey creator service
+ * Handles survey design and JSON generation without the heavy SurveyCreatorModel
+ * Supports: text, comment, boolean, radiogroup, dropdown, html element types
  */
 export class SurveyCreatorService {
-  private creatorModel: SurveyCreatorModel | null = null;
   private container: HTMLElement | null = null;
   private currentSurvey: SurveyDefinition | null = null;
-  private surveyCore = Model;
 
   /**
-   * Initialize the Survey.js Creator component
+   * Initialize the lightweight Survey Creator component
    */
   initialize(container: HTMLElement): void {
     this.container = container;
-    
-    // Set up Survey.js localization
-    surveyLocalization.defaultLocale = 'en';
-    
-    // Create the Survey Creator model with Phase 2 configuration
-    this.creatorModel = new SurveyCreatorModel({
-      showLogicTab: true,
-      showTranslationTab: false,
-      showThemeTab: false,
-      isAutoSave: false,
-      // Configure available question types for Phase 2
-      questionTypes: ['text', 'comment', 'radiogroup', 'html'],
-    });
-    
-    // Set up event handlers
-    this.setupEventHandlers();
     
     // Configure default survey for new creations
     this.setupDefaultSurvey();
@@ -44,33 +25,13 @@ export class SurveyCreatorService {
     // Render the creator using the container's innerHTML approach
     this.renderCreator(container);
     
-    console.log('Survey Creator initialized with Phase 2 configuration');
-  }
-
-  /**
-   * Set up event handlers for the creator
-   */
-  private setupEventHandlers(): void {
-    if (!this.creatorModel) return;
-    
-    // Handle survey changes
-    this.creatorModel.onModified.add(() => {
-      console.log('Survey modified');
-      this.currentSurvey = this.getSurveyJson();
-    });
-    
-    // Handle survey state changes (correct API)
-    this.creatorModel.onStateChanged.add(() => {
-      console.log('Survey state changed');
-    });
+    console.log('Survey Creator initialized (lightweight version)');
   }
 
   /**
    * Set up default survey configuration
    */
   private setupDefaultSurvey(): void {
-    if (!this.creatorModel) return;
-    
     const defaultSurvey: SurveyDefinition = {
       title: 'New Legal Document Survey',
       description: 'Collect information for document generation',
@@ -95,8 +56,6 @@ export class SurveyCreatorService {
    * Render the Survey Creator in the container
    */
   private renderCreator(container: HTMLElement): void {
-    if (!this.creatorModel) return;
-    
     // Clear container
     container.innerHTML = '';
     
@@ -106,13 +65,12 @@ export class SurveyCreatorService {
     creatorDiv.style.height = '600px';
     container.appendChild(creatorDiv);
     
-    // For Phase 2, we'll implement a simplified creator interface
-    // Full Survey.js Creator integration would require additional setup
+    // Render our simplified creator interface
     this.renderSimplifiedCreator(creatorDiv);
   }
 
   /**
-   * Render a simplified creator interface for Phase 2
+   * Render a simplified creator interface
    */
   private renderSimplifiedCreator(container: HTMLElement): void {
     container.innerHTML = `
@@ -133,8 +91,14 @@ export class SurveyCreatorService {
               <button class="add-question-btn w-full text-left px-3 py-2 text-sm bg-white border border-gray-300 rounded hover:bg-gray-50" data-type="comment">
                 📄 Multi-line Text
               </button>
+              <button class="add-question-btn w-full text-left px-3 py-2 text-sm bg-white border border-gray-300 rounded hover:bg-gray-50" data-type="boolean">
+                ☑️ Yes/No Checkbox
+              </button>
               <button class="add-question-btn w-full text-left px-3 py-2 text-sm bg-white border border-gray-300 rounded hover:bg-gray-50" data-type="radiogroup">
                 🔘 Radio Buttons
+              </button>
+              <button class="add-question-btn w-full text-left px-3 py-2 text-sm bg-white border border-gray-300 rounded hover:bg-gray-50" data-type="dropdown">
+                📋 Dropdown List
               </button>
               <button class="add-question-btn w-full text-left px-3 py-2 text-sm bg-white border border-gray-300 rounded hover:bg-gray-50" data-type="html">
                 ℹ️ Information Text
@@ -256,8 +220,17 @@ export class SurveyCreatorService {
         newQuestion.title = 'Multi-line Text Question';
         newQuestion.isRequired = true;
         break;
+      case 'boolean':
+        newQuestion.title = 'Yes/No Question';
+        newQuestion.isRequired = true;
+        break;
       case 'radiogroup':
         newQuestion.title = 'Radio Button Question';
+        newQuestion.choices = ['Option 1', 'Option 2', 'Option 3'];
+        newQuestion.isRequired = true;
+        break;
+      case 'dropdown':
+        newQuestion.title = 'Dropdown Question';
         newQuestion.choices = ['Option 1', 'Option 2', 'Option 3'];
         newQuestion.isRequired = true;
         break;
@@ -310,8 +283,10 @@ export class SurveyCreatorService {
   private renderQuestionEditor(question: SurveyElement, index: number): string {
     const typeLabels: Record<string, string> = {
       text: '📝 Text Input',
-      comment: '📄 Multi-line Text', 
+      comment: '📄 Multi-line Text',
+      boolean: '☑️ Yes/No Checkbox',
       radiogroup: '🔘 Radio Buttons',
+      dropdown: '📋 Dropdown List',
       html: 'ℹ️ Information Text'
     };
     
@@ -329,7 +304,7 @@ export class SurveyCreatorService {
             class="block w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
             onchange="updateQuestion(${index}, 'title', this.value)"
           />
-          ${question.type === 'radiogroup' ? `
+          ${question.type === 'radiogroup' || question.type === 'dropdown' ? `
             <div>
               <label class="block text-xs font-medium text-gray-700 mb-1">Choices (one per line):</label>
               <textarea 
@@ -348,12 +323,9 @@ export class SurveyCreatorService {
    * Load an existing survey into the creator
    */
   loadSurvey(surveyJson: SurveyDefinition): void {
-    if (!this.creatorModel) {
-      throw new Error('Creator not initialized');
-    }
-    
     try {
-      this.creatorModel.text = JSON.stringify(surveyJson, null, 2);
+      this.currentSurvey = JSON.parse(JSON.stringify(surveyJson)); // Deep clone
+      this.refreshDesignerArea();
       console.log('Survey loaded into creator');
     } catch (error) {
       console.error('Error loading survey:', error);
@@ -365,15 +337,11 @@ export class SurveyCreatorService {
    * Get the current survey JSON
    */
   getSurveyJson(): SurveyDefinition {
-    if (!this.creatorModel) {
-      throw new Error('Creator not initialized');
+    if (!this.currentSurvey) {
+      throw new Error('No survey loaded');
     }
     
-    try {
-      return JSON.parse(this.creatorModel.text);
-    } catch (error) {
-      throw new Error('Invalid survey JSON. Please check your survey configuration.');
-    }
+    return JSON.parse(JSON.stringify(this.currentSurvey)); // Return a deep clone
   }
 
   /**
@@ -417,13 +385,8 @@ export class SurveyCreatorService {
    * Preview the survey in runtime mode
    */
   showPreview(): void {
-    if (!this.creatorModel) {
-      throw new Error('Creator not initialized');
-    }
-    
     try {
-      // This will open the preview tab in Survey.js Creator
-      this.creatorModel.showPreview();
+      this.previewSurvey();
     } catch (error) {
       console.error('Error showing preview:', error);
       throw new Error('Could not show preview. Please check your survey configuration.');
@@ -452,10 +415,6 @@ export class SurveyCreatorService {
    * Create a new blank survey
    */
   createNewSurvey(): void {
-    if (!this.creatorModel) {
-      throw new Error('Creator not initialized');
-    }
-    
     const blankSurvey: SurveyDefinition = {
       title: 'New Survey',
       description: '',
@@ -579,10 +538,6 @@ export class SurveyCreatorService {
    * Cleanup resources
    */
   dispose(): void {
-    if (this.creatorModel) {
-      this.creatorModel.dispose();
-      this.creatorModel = null;
-    }
     this.container = null;
     this.currentSurvey = null;
   }

@@ -1,7 +1,7 @@
 import 'survey-core/defaultV2.min.css';
 
 import { Model } from 'survey-core';
-import type { SurveyDefinition, SurveyElement } from '@/types';
+import type { SurveyDefinition, SurveyElement, SurveyPage } from '@/types';
 import { FileUtils, DateUtils } from '@/utils/common';
 
 /**
@@ -12,6 +12,7 @@ import { FileUtils, DateUtils } from '@/utils/common';
 export class SurveyCreatorService {
   private container: HTMLElement | null = null;
   private currentSurvey: SurveyDefinition | null = null;
+  private currentPageIndex: number = 0;
 
   /**
    * Initialize the lightweight Survey Creator component
@@ -104,6 +105,16 @@ export class SurveyCreatorService {
                 ℹ️ Information Text
               </button>
             </div>
+            
+            <div class="mt-6 pt-4 border-t border-gray-300">
+              <h4 class="font-medium text-gray-900 mb-3">Pages</h4>
+              <div id="page-list" class="space-y-2 mb-3">
+                <!-- Page list will be rendered here -->
+              </div>
+              <button id="add-page-btn" class="w-full text-left px-3 py-2 text-sm bg-white border border-gray-300 rounded hover:bg-gray-50">
+                ➕ Add Page
+              </button>
+            </div>
           </div>
           
           <!-- Designer Area -->
@@ -131,6 +142,7 @@ export class SurveyCreatorService {
     
     this.setupCreatorEvents(container);
     this.setupGlobalFunctions();
+    this.renderPageList();
   }
 
   /**
@@ -154,6 +166,11 @@ export class SurveyCreatorService {
     container.querySelector('#download-survey')?.addEventListener('click', () => {
       this.downloadSurveyJson();
     });
+    
+    // Add page button
+    container.querySelector('#add-page-btn')?.addEventListener('click', () => {
+      this.handleAddPage();
+    });
   }
 
   /**
@@ -163,11 +180,11 @@ export class SurveyCreatorService {
     // Make functions available globally for HTML onclick handlers
     (window as any).updateQuestion = (index: number, field: string, value: string) => {
       const survey = this.getSurveyJson();
-      if (survey.pages && survey.pages[0] && survey.pages[0].elements && survey.pages[0].elements[index]) {
+      if (survey.pages && survey.pages[this.currentPageIndex] && survey.pages[this.currentPageIndex].elements && survey.pages[this.currentPageIndex].elements[index]) {
         if (field === 'title') {
-          survey.pages[0].elements[index].title = value;
+          survey.pages[this.currentPageIndex].elements[index].title = value;
         } else if (field === 'html') {
-          survey.pages[0].elements[index].html = value;
+          survey.pages[this.currentPageIndex].elements[index].html = value;
         }
         this.loadSurvey(survey);
       }
@@ -175,19 +192,47 @@ export class SurveyCreatorService {
 
     (window as any).updateQuestionChoices = (index: number, choicesText: string) => {
       const survey = this.getSurveyJson();
-      if (survey.pages && survey.pages[0] && survey.pages[0].elements && survey.pages[0].elements[index]) {
+      if (survey.pages && survey.pages[this.currentPageIndex] && survey.pages[this.currentPageIndex].elements && survey.pages[this.currentPageIndex].elements[index]) {
         const choices = choicesText.split('\n').filter(choice => choice.trim() !== '');
-        survey.pages[0].elements[index].choices = choices;
+        survey.pages[this.currentPageIndex].elements[index].choices = choices;
         this.loadSurvey(survey);
       }
     };
 
     (window as any).removeQuestion = (index: number) => {
       const survey = this.getSurveyJson();
-      if (survey.pages && survey.pages[0] && survey.pages[0].elements) {
-        survey.pages[0].elements.splice(index, 1);
+      if (survey.pages && survey.pages[this.currentPageIndex] && survey.pages[this.currentPageIndex].elements) {
+        survey.pages[this.currentPageIndex].elements.splice(index, 1);
         this.loadSurvey(survey);
         this.refreshDesignerArea();
+      }
+    };
+
+    (window as any).selectPage = (pageIndex: number) => {
+      this.currentPageIndex = pageIndex;
+      this.refreshDesignerArea();
+      this.renderPageList();
+    };
+
+    (window as any).deletePage = (pageIndex: number) => {
+      try {
+        this.removePage(pageIndex);
+        if (this.currentPageIndex >= pageIndex && this.currentPageIndex > 0) {
+          this.currentPageIndex--;
+        }
+        this.refreshDesignerArea();
+        this.renderPageList();
+      } catch (error) {
+        alert((error as Error).message);
+      }
+    };
+
+    (window as any).updatePageTitle = (pageIndex: number, title: string) => {
+      try {
+        this.updatePageMetadata(pageIndex, title, undefined);
+        this.renderPageList();
+      } catch (error) {
+        console.error('Error updating page title:', error);
       }
     };
   }
@@ -199,9 +244,11 @@ export class SurveyCreatorService {
     const survey = this.getSurveyJson();
     if (!survey.pages || survey.pages.length === 0) {
       survey.pages = [{ name: 'page1', elements: [] }];
+      this.currentPageIndex = 0;
     }
     
-    const questionCount = survey.pages[0].elements?.length || 0;
+    const currentPage = survey.pages[this.currentPageIndex];
+    const questionCount = currentPage.elements?.length || 0;
     const questionName = `question_${questionCount + 1}`;
     
     let newQuestion: SurveyElement = {
@@ -239,8 +286,8 @@ export class SurveyCreatorService {
         break;
     }
     
-    survey.pages[0].elements = survey.pages[0].elements || [];
-    survey.pages[0].elements.push(newQuestion);
+    currentPage.elements = currentPage.elements || [];
+    currentPage.elements.push(newQuestion);
     
     this.loadSurvey(survey);
     this.refreshDesignerArea();
@@ -254,13 +301,30 @@ export class SurveyCreatorService {
     if (!designerArea) return;
     
     const survey = this.getSurveyJson();
-    const questions = survey.pages?.[0]?.elements || [];
+    if (!survey.pages || survey.pages.length === 0) {
+      designerArea.innerHTML = `
+        <div class="text-center text-gray-500 mt-20">
+          <p>No pages in survey</p>
+          <p class="text-sm mt-2">Add a page to get started</p>
+        </div>
+      `;
+      return;
+    }
+    
+    const currentPage = survey.pages[this.currentPageIndex];
+    const questions = currentPage?.elements || [];
     
     if (questions.length === 0) {
       designerArea.innerHTML = `
-        <div class="text-center text-gray-500 mt-20">
-          <p>Drag question types from the left to build your survey</p>
-          <p class="text-sm mt-2">Or use the buttons to add questions</p>
+        <div class="space-y-4">
+          <div class="mb-6">
+            <h3 class="text-lg font-medium text-gray-900 mb-2">${currentPage.title || currentPage.name}</h3>
+            ${currentPage.description ? `<p class="text-gray-600">${currentPage.description}</p>` : ''}
+          </div>
+          <div class="text-center text-gray-500 mt-20">
+            <p>No questions on this page</p>
+            <p class="text-sm mt-2">Add questions using the buttons on the left</p>
+          </div>
         </div>
       `;
       return;
@@ -269,8 +333,8 @@ export class SurveyCreatorService {
     designerArea.innerHTML = `
       <div class="space-y-4">
         <div class="mb-6">
-          <h3 class="text-lg font-medium text-gray-900 mb-2">${survey.title}</h3>
-          <p class="text-gray-600">${survey.description || ''}</p>
+          <h3 class="text-lg font-medium text-gray-900 mb-2">${currentPage.title || currentPage.name}</h3>
+          ${currentPage.description ? `<p class="text-gray-600">${currentPage.description}</p>` : ''}
         </div>
         ${questions.map((q: any, index: number) => this.renderQuestionEditor(q, index)).join('')}
       </div>
@@ -320,12 +384,73 @@ export class SurveyCreatorService {
   }
 
   /**
+   * Render the page list in the toolbox
+   */
+  private renderPageList(): void {
+    const pageListContainer = this.container?.querySelector('#page-list');
+    if (!pageListContainer) return;
+    
+    const survey = this.getSurveyJson();
+    const pages = survey.pages || [];
+    
+    if (pages.length === 0) {
+      pageListContainer.innerHTML = `
+        <div class="text-xs text-gray-500 px-2 py-1">No pages</div>
+      `;
+      return;
+    }
+    
+    pageListContainer.innerHTML = pages.map((page, index) => {
+      const isActive = index === this.currentPageIndex;
+      const pageTitle = page.title || page.name;
+      return `
+        <div class="flex items-center space-x-1 ${isActive ? 'bg-blue-50 border-blue-300' : 'bg-white border-gray-300'} border rounded px-2 py-1">
+          <button 
+            class="flex-1 text-left text-sm ${isActive ? 'font-medium text-blue-700' : 'text-gray-700'} hover:text-blue-600"
+            onclick="selectPage(${index})"
+          >
+            ${pageTitle}
+          </button>
+          ${pages.length > 1 ? `
+            <button 
+              class="text-red-500 hover:text-red-700 text-xs"
+              onclick="deletePage(${index})"
+              title="Delete page"
+            >
+              ×
+            </button>
+          ` : ''}
+        </div>
+      `;
+    }).join('');
+  }
+
+  /**
+   * Handle adding a new page
+   */
+  private handleAddPage(): void {
+    try {
+      const survey = this.getSurveyJson();
+      const pageCount = survey.pages?.length || 0;
+      this.addPage();
+      this.currentPageIndex = pageCount; // Switch to the new page
+      this.refreshDesignerArea();
+      this.renderPageList();
+    } catch (error) {
+      console.error('Error adding page:', error);
+      alert('Failed to add page');
+    }
+  }
+
+  /**
    * Load an existing survey into the creator
    */
   loadSurvey(surveyJson: SurveyDefinition): void {
     try {
       this.currentSurvey = JSON.parse(JSON.stringify(surveyJson)); // Deep clone
+      this.currentPageIndex = 0; // Reset to first page
       this.refreshDesignerArea();
+      this.renderPageList();
       console.log('Survey loaded into creator');
     } catch (error) {
       console.error('Error loading survey:', error);
@@ -535,10 +660,79 @@ export class SurveyCreatorService {
   }
 
   /**
+   * Get all pages in the survey
+   */
+  getPages(): SurveyPage[] {
+    const survey = this.getSurveyJson();
+    return survey.pages || [];
+  }
+
+  /**
+   * Add a new page to the survey
+   */
+  addPage(name?: string, title?: string, description?: string): void {
+    const survey = this.getSurveyJson();
+    if (!survey.pages) {
+      survey.pages = [];
+    }
+    
+    const pageCount = survey.pages.length;
+    const pageName = name || `page${pageCount + 1}`;
+    const pageTitle = title || `Page ${pageCount + 1}`;
+    
+    const newPage: SurveyPage = {
+      name: pageName,
+      title: pageTitle,
+      description: description,
+      elements: []
+    };
+    
+    survey.pages.push(newPage);
+    this.loadSurvey(survey);
+  }
+
+  /**
+   * Remove a page from the survey by index
+   */
+  removePage(pageIndex: number): void {
+    const survey = this.getSurveyJson();
+    if (!survey.pages || pageIndex < 0 || pageIndex >= survey.pages.length) {
+      throw new Error('Invalid page index');
+    }
+    
+    if (survey.pages.length === 1) {
+      throw new Error('Cannot remove the last page. Survey must have at least one page.');
+    }
+    
+    survey.pages.splice(pageIndex, 1);
+    this.loadSurvey(survey);
+  }
+
+  /**
+   * Update page metadata (title, description)
+   */
+  updatePageMetadata(pageIndex: number, title?: string, description?: string): void {
+    const survey = this.getSurveyJson();
+    if (!survey.pages || pageIndex < 0 || pageIndex >= survey.pages.length) {
+      throw new Error('Invalid page index');
+    }
+    
+    if (title !== undefined) {
+      survey.pages[pageIndex].title = title;
+    }
+    if (description !== undefined) {
+      survey.pages[pageIndex].description = description;
+    }
+    
+    this.loadSurvey(survey);
+  }
+
+  /**
    * Cleanup resources
    */
   dispose(): void {
     this.container = null;
     this.currentSurvey = null;
+    this.currentPageIndex = 0;
   }
 }

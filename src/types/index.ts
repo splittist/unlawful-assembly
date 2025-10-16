@@ -12,10 +12,17 @@ export interface SurveyElement {
   defaultValue?: any;
 }
 
+export interface SurveyPage {
+  name: string;
+  title?: string;
+  description?: string;
+  elements: SurveyElement[];
+}
+
 export interface SurveyDefinition {
   title?: string;
   description?: string;
-  pages?: any[];
+  pages?: SurveyPage[];
   // Survey.js JSON format - will be extended as needed
   [key: string]: any;
 }

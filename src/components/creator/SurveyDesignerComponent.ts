@@ -42,14 +42,6 @@ export class SurveyDesignerComponent {
               <p class="mt-1 text-sm text-gray-500">Create a new survey or load an existing one to get started</p>
             </div>
           </div>
-          <div class="mt-6 flex justify-end space-x-3">
-            <button id="preview-survey-btn" class="bg-gray-300 text-gray-700 px-4 py-2 rounded-md text-sm font-medium" disabled>
-              Preview Survey
-            </button>
-            <button id="download-survey-btn" class="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium" disabled>
-              Download Survey JSON
-            </button>
-          </div>
         </div>
       </div>
     `;
@@ -63,22 +55,10 @@ export class SurveyDesignerComponent {
   private setupEvents(container: HTMLElement): void {
     const newSurveyBtn = container.querySelector('#new-survey-btn');
     const loadSurveyInput = container.querySelector('#load-survey-input') as HTMLInputElement;
-    const previewBtn = container.querySelector('#preview-survey-btn');
-    const downloadBtn = container.querySelector('#download-survey-btn');
     const creatorContainer = container.querySelector('#survey-creator-container')!;
 
     // Initialize the SurveyCreatorService with the container
     this.surveyCreatorService.initialize(creatorContainer as HTMLElement);
-
-    // Enable buttons now that service is initialized
-    if (previewBtn) {
-      (previewBtn as HTMLButtonElement).disabled = false;
-      previewBtn.classList.remove('bg-gray-300', 'text-gray-700');
-      previewBtn.classList.add('bg-green-600', 'text-white', 'hover:bg-green-700');
-    }
-    if (downloadBtn) {
-      (downloadBtn as HTMLButtonElement).disabled = false;
-    }
 
     newSurveyBtn?.addEventListener('click', () => {
       this.createNewSurvey();
@@ -100,14 +80,6 @@ export class SurveyDesignerComponent {
       this.loadSampleSurvey();
     });
     container.querySelector('.mb-6')?.appendChild(loadSampleBtn);
-
-    previewBtn?.addEventListener('click', () => {
-      this.previewSurvey();
-    });
-
-    downloadBtn?.addEventListener('click', () => {
-      this.downloadSurvey();
-    });
   }
 
   /**
@@ -141,31 +113,6 @@ export class SurveyDesignerComponent {
     } catch (error) {
       console.error('Error loading survey file:', error);
       showNotification('Failed to load survey file. Please check the file format.', 'error');
-    }
-  }
-
-  /**
-   * Preview the current survey
-   */
-  private previewSurvey(): void {
-    try {
-      this.surveyCreatorService.showPreview();
-    } catch (error) {
-      console.error('Error showing preview:', error);
-      showNotification('Preview functionality is provided by the Survey Designer interface', 'info');
-    }
-  }
-
-  /**
-   * Download the current survey as JSON
-   */
-  private downloadSurvey(): void {
-    try {
-      this.surveyCreatorService.downloadSurvey();
-      showNotification('Survey downloaded successfully', 'success');
-    } catch (error) {
-      console.error('Error downloading survey:', error);
-      showNotification(`Failed to download survey: ${error}`, 'error');
     }
   }
 

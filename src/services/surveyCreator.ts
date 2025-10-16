@@ -186,7 +186,9 @@ export class SurveyCreatorService {
         } else if (field === 'html') {
           survey.pages[this.currentPageIndex].elements[index].html = value;
         }
+        const savedPageIndex = this.currentPageIndex;
         this.loadSurvey(survey);
+        this.currentPageIndex = savedPageIndex;
       }
     };
 
@@ -195,7 +197,9 @@ export class SurveyCreatorService {
       if (survey.pages && survey.pages[this.currentPageIndex] && survey.pages[this.currentPageIndex].elements && survey.pages[this.currentPageIndex].elements[index]) {
         const choices = choicesText.split('\n').filter(choice => choice.trim() !== '');
         survey.pages[this.currentPageIndex].elements[index].choices = choices;
+        const savedPageIndex = this.currentPageIndex;
         this.loadSurvey(survey);
+        this.currentPageIndex = savedPageIndex;
       }
     };
 
@@ -203,7 +207,9 @@ export class SurveyCreatorService {
       const survey = this.getSurveyJson();
       if (survey.pages && survey.pages[this.currentPageIndex] && survey.pages[this.currentPageIndex].elements) {
         survey.pages[this.currentPageIndex].elements.splice(index, 1);
+        const savedPageIndex = this.currentPageIndex;
         this.loadSurvey(survey);
+        this.currentPageIndex = savedPageIndex;
         this.refreshDesignerArea();
       }
     };
@@ -289,7 +295,10 @@ export class SurveyCreatorService {
     currentPage.elements = currentPage.elements || [];
     currentPage.elements.push(newQuestion);
     
+    // Preserve the current page index when reloading the survey
+    const savedPageIndex = this.currentPageIndex;
     this.loadSurvey(survey);
+    this.currentPageIndex = savedPageIndex;
     this.refreshDesignerArea();
   }
 
@@ -656,7 +665,9 @@ export class SurveyCreatorService {
     if (description !== undefined) {
       survey.description = description;
     }
+    const savedPageIndex = this.currentPageIndex;
     this.loadSurvey(survey);
+    this.currentPageIndex = savedPageIndex;
   }
 
   /**
@@ -724,7 +735,9 @@ export class SurveyCreatorService {
       survey.pages[pageIndex].description = description;
     }
     
+    const savedPageIndex = this.currentPageIndex;
     this.loadSurvey(survey);
+    this.currentPageIndex = savedPageIndex;
   }
 
   /**

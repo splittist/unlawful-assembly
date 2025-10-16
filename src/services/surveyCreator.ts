@@ -3,7 +3,7 @@ import 'survey-creator-core/survey-creator-core.min.css';
 
 import { SurveyCreatorModel } from 'survey-creator-core';
 import { Model, surveyLocalization } from 'survey-core';
-import type { SurveyDefinition } from '@/types';
+import type { SurveyDefinition, SurveyElement } from '@/types';
 import { FileUtils, DateUtils } from '@/utils/common';
 
 /**
@@ -240,8 +240,8 @@ export class SurveyCreatorService {
     const questionCount = survey.pages[0].elements?.length || 0;
     const questionName = `question_${questionCount + 1}`;
     
-    let newQuestion: any = {
-      type,
+    let newQuestion: SurveyElement = {
+      type: type as SurveyElement['type'],
       name: questionName,
       title: `Question ${questionCount + 1}`
     };
@@ -307,7 +307,7 @@ export class SurveyCreatorService {
   /**
    * Render a question editor
    */
-  private renderQuestionEditor(question: any, index: number): string {
+  private renderQuestionEditor(question: SurveyElement, index: number): string {
     const typeLabels: Record<string, string> = {
       text: '📝 Text Input',
       comment: '📄 Multi-line Text', 
@@ -542,7 +542,7 @@ export class SurveyCreatorService {
       const fields: string[] = [];
       
       survey.pages?.forEach(page => {
-        page.elements?.forEach((element: any) => {
+        page.elements?.forEach((element: SurveyElement) => {
           if (element.name && element.type !== 'html') {
             fields.push(element.name);
           }

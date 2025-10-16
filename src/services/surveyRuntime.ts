@@ -1,4 +1,4 @@
-import type { SurveyDefinition } from '@/types';
+import type { SurveyDefinition, SurveyElement } from '@/types';
 
 /**
  * Survey.js Runtime integration service
@@ -70,7 +70,7 @@ export class SurveyRuntimeService {
         html += `<h3 class="text-md font-medium text-gray-900 mb-4">Page ${pageIndex + 1}</h3>`;
       }
       
-      page.elements?.forEach((element: any) => {
+      page.elements?.forEach((element: SurveyElement) => {
         html += this.renderFormElement(element);
       });
       
@@ -83,7 +83,7 @@ export class SurveyRuntimeService {
   /**
    * Render individual form elements
    */
-  private renderFormElement(element: any): string {
+  private renderFormElement(element: SurveyElement): string {
     const isRequired = element.isRequired ? 'required' : '';
     const requiredMark = element.isRequired ? '<span class="text-red-500">*</span>' : '';
     
@@ -128,41 +128,22 @@ export class SurveyRuntimeService {
               ${element.title || element.name} ${requiredMark}
             </label>
             <div class="space-y-2">
-              ${choices.map((choice: any, index: number) => `
+              ${choices.map((choice) => {
+                const value = typeof choice === 'string' ? choice : choice.value;
+                const text = typeof choice === 'string' ? choice : choice.text;
+                return `
                 <label class="flex items-center">
                   <input 
                     type="radio" 
                     name="${element.name}" 
-                    value="${choice.value || choice}"
+                    value="${value}"
                     class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
                     ${isRequired}
                   />
-                  <span class="ml-2 text-sm text-gray-700">${choice.text || choice}</span>
+                  <span class="ml-2 text-sm text-gray-700">${text}</span>
                 </label>
-              `).join('')}
-            </div>
-          </div>
-        `;
-        
-      case 'checkbox':
-        const checkboxChoices = element.choices || [];
-        return `
-          <div class="form-group">
-            <label class="block text-sm font-medium text-gray-700 mb-2">
-              ${element.title || element.name} ${requiredMark}
-            </label>
-            <div class="space-y-2">
-              ${checkboxChoices.map((choice: any) => `
-                <label class="flex items-center">
-                  <input 
-                    type="checkbox" 
-                    name="${element.name}" 
-                    value="${choice.value || choice}"
-                    class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                  />
-                  <span class="ml-2 text-sm text-gray-700">${choice.text || choice}</span>
-                </label>
-              `).join('')}
+              `;
+              }).join('')}
             </div>
           </div>
         `;
@@ -181,9 +162,11 @@ export class SurveyRuntimeService {
               ${isRequired}
             >
               <option value="">Select an option...</option>
-              ${dropdownChoices.map((choice: any) => `
-                <option value="${choice.value || choice}">${choice.text || choice}</option>
-              `).join('')}
+              ${dropdownChoices.map((choice) => {
+                const value = typeof choice === 'string' ? choice : choice.value;
+                const text = typeof choice === 'string' ? choice : choice.text;
+                return `<option value="${value}">${text}</option>`;
+              }).join('')}
             </select>
           </div>
         `;

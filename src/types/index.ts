@@ -1,5 +1,17 @@
 // Core application types based on PRD specifications
 
+export interface SurveyElement {
+  type: 'text' | 'comment' | 'boolean' | 'radiogroup' | 'dropdown' | 'html';
+  name: string;
+  title?: string;
+  isRequired?: boolean;
+  description?: string;
+  choices?: Array<string | { value: string; text: string }>;
+  html?: string; // for 'html' type (fixed text with styling)
+  placeholder?: string;
+  defaultValue?: any;
+}
+
 export interface SurveyDefinition {
   title?: string;
   description?: string;

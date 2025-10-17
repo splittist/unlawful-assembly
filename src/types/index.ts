@@ -94,3 +94,17 @@ export interface ErrorState {
   message?: string;
   details?: string;
 }
+
+// Property Editor types
+export type SelectionType = 'survey' | 'page' | 'element' | null;
+
+export interface PropertyEditorSelection {
+  type: SelectionType;
+  elementName?: string;
+  pageIndex?: number;
+}
+
+export interface PropertyEditorState {
+  selection: PropertyEditorSelection;
+  surveyDefinition: SurveyDefinition | null;
+}

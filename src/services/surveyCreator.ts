@@ -1,8 +1,6 @@
-import 'survey-core/defaultV2.min.css';
-
-import { Model } from 'survey-core';
 import type { SurveyDefinition, SurveyElement, SurveyPage, PropertyEditorSelection } from '@/types';
 import { FileUtils, DateUtils } from '@/utils/common';
+import { SurveyRuntimeService } from './surveyRuntime';
 
 /**
  * Lightweight survey creator service
@@ -601,17 +599,17 @@ export class SurveyCreatorService {
     modal.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4';
     
     const modalContent = document.createElement('div');
-    modalContent.className = 'bg-white rounded-lg p-6 max-w-4xl max-h-[90vh] overflow-y-auto relative';
+    modalContent.className = 'bg-white rounded-lg max-w-4xl max-h-[90vh] overflow-y-auto relative shadow-xl';
     
     const header = document.createElement('div');
-    header.className = 'flex justify-between items-center mb-4 border-b pb-4';
+    header.className = 'flex justify-between items-center p-6 border-b border-gray-200 bg-gray-50';
     
     const title = document.createElement('h3');
     title.className = 'text-lg font-semibold text-gray-900';
     title.textContent = 'Survey Preview';
     
     const closeButton = document.createElement('button');
-    closeButton.className = 'text-gray-400 hover:text-gray-600 text-xl';
+    closeButton.className = 'text-gray-400 hover:text-gray-600 text-2xl font-bold leading-none';
     closeButton.innerHTML = '&times;';
     closeButton.addEventListener('click', () => modal.remove());
     
@@ -626,9 +624,9 @@ export class SurveyCreatorService {
     modal.appendChild(modalContent);
     document.body.appendChild(modal);
     
-    // Render survey
-    const surveyModel = new Model(survey);
-    surveyModel.render(surveyContainer);
+    // Render survey using SurveyRuntimeService in preview mode
+    const runtimeService = new SurveyRuntimeService();
+    runtimeService.initialize(surveyContainer, survey, undefined, 'preview');
   }
 
   /**

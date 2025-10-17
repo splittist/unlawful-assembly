@@ -2,24 +2,58 @@ import type { SurveyDefinition, SurveyElement } from '@/types';
 
 /**
  * Survey.js Runtime integration service
- * Handles survey rendering and data collection for users
+ * Handles survey rendering and data collection for users and preview mode
  */
 export class SurveyRuntimeService {
-  private surveyModel: any = null;
   private container: HTMLElement | null = null;
-  private currentSurvey: SurveyDefinition | null = null;
   private onCompleteCallback: ((data: any) => void) | null = null;
 
   /**
    * Initialize the Survey.js runtime
+   * @param container - HTML element to render the survey in
+   * @param surveyJson - Survey definition to render
+   * @param onComplete - Optional callback when survey is completed (ignored in preview mode)
+   * @param mode - 'user' for normal completion mode, 'preview' for read-only preview mode
    */
-  initialize(container: HTMLElement, surveyJson: SurveyDefinition, onComplete?: (data: any) => void): void {
+  initialize(
+    container: HTMLElement,
+    surveyJson: SurveyDefinition,
+    onComplete?: (data: any) => void,
+    mode: 'user' | 'preview' = 'user'
+  ): void {
     this.container = container;
-    this.currentSurvey = surveyJson;
     this.onCompleteCallback = onComplete || null;
     
-    // For Phase 1, create a simple form renderer
-    this.renderSimpleForm(container, surveyJson);
+    // Render form based on mode
+    if (mode === 'preview') {
+      this.renderPreviewForm(container, surveyJson);
+    } else {
+      this.renderSimpleForm(container, surveyJson);
+    }
+  }
+
+  /**
+   * Render survey in preview mode (read-only, no submission)
+   */
+  private renderPreviewForm(container: HTMLElement, survey: SurveyDefinition): void {
+    const formHtml = this.generateFormHtml(survey, true);
+    
+    container.innerHTML = `
+      <div class="bg-white">
+        <div class="px-6 py-4 border-b border-gray-200">
+          <h2 class="text-lg font-medium text-gray-900">${survey.title || 'Survey Preview'}</h2>
+          ${survey.description ? `<p class="mt-1 text-sm text-gray-600">${survey.description}</p>` : ''}
+        </div>
+        <div class="p-6 space-y-6">
+          ${formHtml}
+        </div>
+        <div class="px-6 py-4 bg-gray-50 border-t border-gray-200">
+          <p class="text-sm text-gray-600">
+            <strong>Preview Mode:</strong> This is a read-only preview of how the survey will appear to users.
+          </p>
+        </div>
+      </div>
+    `;
   }
 
   /**
@@ -59,8 +93,10 @@ export class SurveyRuntimeService {
 
   /**
    * Generate HTML for form fields based on survey definition
+   * @param survey - Survey definition
+   * @param isPreview - Whether this is a preview (read-only) rendering
    */
-  private generateFormHtml(survey: SurveyDefinition): string {
+  private generateFormHtml(survey: SurveyDefinition, isPreview: boolean = false): string {
     let html = '';
     
     survey.pages?.forEach((page, pageIndex) => {
@@ -71,7 +107,7 @@ export class SurveyRuntimeService {
       }
       
       page.elements?.forEach((element: SurveyElement) => {
-        html += this.renderFormElement(element);
+        html += this.renderFormElement(element, isPreview);
       });
       
       html += `</div>`;
@@ -82,10 +118,14 @@ export class SurveyRuntimeService {
 
   /**
    * Render individual form elements
+   * @param element - Survey element to render
+   * @param isPreview - Whether this is a preview (read-only) rendering
    */
-  private renderFormElement(element: SurveyElement): string {
-    const isRequired = element.isRequired ? 'required' : '';
+  private renderFormElement(element: SurveyElement, isPreview: boolean = false): string {
+    const isRequired = element.isRequired && !isPreview ? 'required' : '';
     const requiredMark = element.isRequired ? '<span class="text-red-500">*</span>' : '';
+    const disabledAttr = isPreview ? 'disabled' : '';
+    const disabledClass = isPreview ? 'bg-gray-50 cursor-not-allowed' : '';
     
     switch (element.type) {
       case 'text':
@@ -98,8 +138,10 @@ export class SurveyRuntimeService {
               type="text" 
               name="${element.name}" 
               id="${element.name}"
-              class="block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              class="block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${disabledClass}"
               ${isRequired}
+              ${disabledAttr}
+              placeholder="${element.placeholder || ''}"
             />
           </div>
         `;
@@ -114,9 +156,30 @@ export class SurveyRuntimeService {
               name="${element.name}" 
               id="${element.name}"
               rows="3"
-              class="block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              class="block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${disabledClass}"
               ${isRequired}
+              ${disabledAttr}
+              placeholder="${element.placeholder || ''}"
             ></textarea>
+          </div>
+        `;
+        
+      case 'boolean':
+        return `
+          <div class="form-group">
+            <label class="flex items-center">
+              <input 
+                type="checkbox" 
+                name="${element.name}" 
+                id="${element.name}"
+                class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                ${isRequired}
+                ${disabledAttr}
+              />
+              <span class="ml-2 text-sm font-medium text-gray-700">
+                ${element.title || element.name} ${requiredMark}
+              </span>
+            </label>
           </div>
         `;
         
@@ -139,6 +202,7 @@ export class SurveyRuntimeService {
                     value="${value}"
                     class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
                     ${isRequired}
+                    ${disabledAttr}
                   />
                   <span class="ml-2 text-sm text-gray-700">${text}</span>
                 </label>
@@ -158,8 +222,9 @@ export class SurveyRuntimeService {
             <select 
               name="${element.name}" 
               id="${element.name}"
-              class="block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              class="block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${disabledClass}"
               ${isRequired}
+              ${disabledAttr}
             >
               <option value="">Select an option...</option>
               ${dropdownChoices.map((choice) => {
@@ -168,6 +233,15 @@ export class SurveyRuntimeService {
                 return `<option value="${value}">${text}</option>`;
               }).join('')}
             </select>
+          </div>
+        `;
+        
+      case 'html':
+        return `
+          <div class="form-group">
+            <div class="text-sm text-gray-700">
+              ${element.html || ''}
+            </div>
           </div>
         `;
         
@@ -181,9 +255,10 @@ export class SurveyRuntimeService {
               type="text" 
               name="${element.name}" 
               id="${element.name}"
-              class="block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              class="block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${disabledClass}"
               placeholder="Unsupported field type: ${element.type}"
               ${isRequired}
+              ${disabledAttr}
             />
           </div>
         `;
@@ -359,8 +434,7 @@ export class SurveyRuntimeService {
    * Cleanup
    */
   dispose(): void {
-    this.surveyModel = null;
     this.container = null;
-    this.currentSurvey = null;
+    this.onCompleteCallback = null;
   }
 }

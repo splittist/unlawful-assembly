@@ -9,4 +9,5 @@ export { SurveyDesignerComponent } from './SurveyDesignerComponent';
 export { TemplateManagerComponent } from './TemplateManagerComponent';
 export { MappingInterfaceComponent } from './MappingInterfaceComponent';
 export { PackageDefinitionComponent } from './PackageDefinitionComponent';
+export { PropertyEditorComponent } from './PropertyEditorComponent';
 export { showNotification, getTypeColor } from './uiUtils';

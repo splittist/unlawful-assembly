@@ -1,7 +1,7 @@
 import 'survey-core/defaultV2.min.css';
 
 import { Model } from 'survey-core';
-import type { SurveyDefinition, SurveyElement, SurveyPage } from '@/types';
+import type { SurveyDefinition, SurveyElement, SurveyPage, PropertyEditorSelection } from '@/types';
 import { FileUtils, DateUtils } from '@/utils/common';
 
 /**
@@ -13,6 +13,8 @@ export class SurveyCreatorService {
   private container: HTMLElement | null = null;
   private currentSurvey: SurveyDefinition | null = null;
   private currentPageIndex: number = 0;
+  private selectedElement: PropertyEditorSelection = { type: null };
+  private onSelectionChangeCallback: ((selection: PropertyEditorSelection) => void) | null = null;
 
   /**
    * Initialize the lightweight Survey Creator component
@@ -178,6 +180,20 @@ export class SurveyCreatorService {
    */
   private setupGlobalFunctions(): void {
     // Make functions available globally for HTML onclick handlers
+    (window as any).selectSurvey = () => {
+      this.selectSurvey();
+    };
+
+    (window as any).selectPageHeader = (pageIndex: number) => {
+      this.selectPage(pageIndex);
+      this.refreshDesignerArea();
+    };
+
+    (window as any).selectElement = (elementName: string) => {
+      this.selectElement(elementName);
+      this.refreshDesignerArea();
+    };
+
     (window as any).updateQuestion = (index: number, field: string, value: string) => {
       const survey = this.getSurveyJson();
       if (survey.pages && survey.pages[this.currentPageIndex] && survey.pages[this.currentPageIndex].elements && survey.pages[this.currentPageIndex].elements[index]) {
@@ -216,6 +232,7 @@ export class SurveyCreatorService {
 
     (window as any).selectPage = (pageIndex: number) => {
       this.currentPageIndex = pageIndex;
+      this.selectPage(pageIndex);
       this.refreshDesignerArea();
       this.renderPageList();
     };
@@ -312,7 +329,7 @@ export class SurveyCreatorService {
     const survey = this.getSurveyJson();
     if (!survey.pages || survey.pages.length === 0) {
       designerArea.innerHTML = `
-        <div class="text-center text-gray-500 mt-20">
+        <div class="text-center text-gray-500 mt-20 cursor-pointer" onclick="selectSurvey()">
           <p>No pages in survey</p>
           <p class="text-sm mt-2">Add a page to get started</p>
         </div>
@@ -323,14 +340,17 @@ export class SurveyCreatorService {
     const currentPage = survey.pages[this.currentPageIndex];
     const questions = currentPage?.elements || [];
     
+    const isPageSelected = this.selectedElement.type === 'page' && this.selectedElement.pageIndex === this.currentPageIndex;
+    const pageHeaderClass = isPageSelected ? 'bg-blue-50 border-blue-300' : 'bg-gray-50 border-transparent';
+    
     if (questions.length === 0) {
       designerArea.innerHTML = `
         <div class="space-y-4">
-          <div class="mb-6">
+          <div class="mb-6 p-3 border-2 ${pageHeaderClass} rounded-lg cursor-pointer hover:border-blue-200 transition-colors" onclick="selectPageHeader(${this.currentPageIndex})">
             <h3 class="text-lg font-medium text-gray-900 mb-2">${currentPage.title || currentPage.name}</h3>
             ${currentPage.description ? `<p class="text-gray-600">${currentPage.description}</p>` : ''}
           </div>
-          <div class="text-center text-gray-500 mt-20">
+          <div class="text-center text-gray-500 mt-20 cursor-pointer" onclick="selectSurvey()">
             <p>No questions on this page</p>
             <p class="text-sm mt-2">Add questions using the buttons on the left</p>
           </div>
@@ -341,7 +361,7 @@ export class SurveyCreatorService {
     
     designerArea.innerHTML = `
       <div class="space-y-4">
-        <div class="mb-6">
+        <div class="mb-6 p-3 border-2 ${pageHeaderClass} rounded-lg cursor-pointer hover:border-blue-200 transition-colors" onclick="selectPageHeader(${this.currentPageIndex})">
           <h3 class="text-lg font-medium text-gray-900 mb-2">${currentPage.title || currentPage.name}</h3>
           ${currentPage.description ? `<p class="text-gray-600">${currentPage.description}</p>` : ''}
         </div>
@@ -363,11 +383,16 @@ export class SurveyCreatorService {
       html: 'ℹ️ Information Text'
     };
     
+    const isSelected = this.selectedElement.type === 'element' && this.selectedElement.elementName === question.name;
+    const selectedClass = isSelected ? 'border-blue-500 bg-blue-50' : 'border-gray-200 bg-white';
+    
     return `
-      <div class="border border-gray-200 rounded-lg p-4 bg-white">
+      <div class="border ${selectedClass} rounded-lg p-4 cursor-pointer hover:border-blue-300 transition-colors" 
+           onclick="selectElement('${question.name}')"
+           data-element-name="${question.name}">
         <div class="flex justify-between items-center mb-3">
           <span class="text-sm font-medium text-gray-500">${typeLabels[question.type] || question.type}</span>
-          <button class="text-red-600 hover:text-red-800 text-sm" onclick="removeQuestion(${index})">Remove</button>
+          <button class="text-red-600 hover:text-red-800 text-sm" onclick="event.stopPropagation(); removeQuestion(${index})">Remove</button>
         </div>
         <div class="space-y-3">
           <input 
@@ -376,6 +401,7 @@ export class SurveyCreatorService {
             placeholder="Question title or content"
             class="block w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
             onchange="updateQuestion(${index}, 'title', this.value)"
+            onclick="event.stopPropagation()"
           />
           ${question.type === 'radiogroup' || question.type === 'dropdown' ? `
             <div>
@@ -384,6 +410,7 @@ export class SurveyCreatorService {
                 rows="3" 
                 class="block w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
                 onchange="updateQuestionChoices(${index}, this.value)"
+                onclick="event.stopPropagation()"
               >${(question.choices || []).join('\\n')}</textarea>
             </div>
           ` : ''}
@@ -747,5 +774,161 @@ export class SurveyCreatorService {
     this.container = null;
     this.currentSurvey = null;
     this.currentPageIndex = 0;
+    this.selectedElement = { type: null };
+    this.onSelectionChangeCallback = null;
+  }
+
+  /**
+   * Set callback for selection changes
+   */
+  onSelectionChange(callback: (selection: PropertyEditorSelection) => void): void {
+    this.onSelectionChangeCallback = callback;
+  }
+
+  /**
+   * Get current selection
+   */
+  getSelection(): PropertyEditorSelection {
+    return { ...this.selectedElement };
+  }
+
+  /**
+   * Select an element by name
+   */
+  selectElement(elementName: string | null): void {
+    if (elementName === null) {
+      this.selectedElement = { type: null };
+    } else {
+      this.selectedElement = { type: 'element', elementName };
+    }
+    this.notifySelectionChange();
+  }
+
+  /**
+   * Select a page by index
+   */
+  selectPage(pageIndex: number): void {
+    this.selectedElement = { type: 'page', pageIndex };
+    this.notifySelectionChange();
+  }
+
+  /**
+   * Select survey-level properties
+   */
+  selectSurvey(): void {
+    this.selectedElement = { type: 'survey' };
+    this.notifySelectionChange();
+  }
+
+  /**
+   * Update element property
+   */
+  updateElementProperty(elementName: string, property: string, value: any): void {
+    const survey = this.getSurveyJson();
+    if (!survey.pages) return;
+
+    let element: SurveyElement | null = null;
+    let pageIndex = -1;
+    let elementIndex = -1;
+
+    // Find the element across all pages
+    for (let i = 0; i < survey.pages.length; i++) {
+      const page = survey.pages[i];
+      const idx = page.elements?.findIndex(e => e.name === elementName);
+      if (idx !== undefined && idx !== -1) {
+        pageIndex = i;
+        elementIndex = idx;
+        element = page.elements![idx];
+        break;
+      }
+    }
+
+    if (!element || pageIndex === -1 || elementIndex === -1) {
+      console.error('Element not found:', elementName);
+      return;
+    }
+
+    // Update the property
+    if (property === 'choices' && Array.isArray(value)) {
+      element.choices = value;
+    } else {
+      (element as any)[property] = value;
+    }
+
+    const savedPageIndex = this.currentPageIndex;
+    const savedSelection = { ...this.selectedElement };
+    this.loadSurvey(survey);
+    this.currentPageIndex = savedPageIndex;
+    this.selectedElement = savedSelection;
+    this.refreshDesignerArea();
+  }
+
+  /**
+   * Update page property
+   */
+  updatePageProperty(pageIndex: number, property: string, value: any): void {
+    const survey = this.getSurveyJson();
+    if (!survey.pages || pageIndex < 0 || pageIndex >= survey.pages.length) {
+      throw new Error('Invalid page index');
+    }
+
+    (survey.pages[pageIndex] as any)[property] = value;
+
+    const savedPageIndex = this.currentPageIndex;
+    const savedSelection = { ...this.selectedElement };
+    this.loadSurvey(survey);
+    this.currentPageIndex = savedPageIndex;
+    this.selectedElement = savedSelection;
+    this.refreshDesignerArea();
+  }
+
+  /**
+   * Update survey property
+   */
+  updateSurveyProperty(property: string, value: any): void {
+    const survey = this.getSurveyJson();
+    (survey as any)[property] = value;
+
+    const savedPageIndex = this.currentPageIndex;
+    const savedSelection = { ...this.selectedElement };
+    this.loadSurvey(survey);
+    this.currentPageIndex = savedPageIndex;
+    this.selectedElement = savedSelection;
+    this.refreshDesignerArea();
+  }
+
+  /**
+   * Get element by name
+   */
+  getElementByName(elementName: string): SurveyElement | null {
+    const survey = this.getSurveyJson();
+    if (!survey.pages) return null;
+
+    for (const page of survey.pages) {
+      const element = page.elements?.find(e => e.name === elementName);
+      if (element) return element;
+    }
+
+    return null;
+  }
+
+  /**
+   * Get page by index
+   */
+  getPageByIndex(pageIndex: number): SurveyPage | null {
+    const survey = this.getSurveyJson();
+    if (!survey.pages || pageIndex < 0 || pageIndex >= survey.pages.length) {
+      return null;
+    }
+    return survey.pages[pageIndex];
+  }
+
+  /**
+   * Notify selection change listeners
+   */
+  private notifySelectionChange(): void {
+    if (this.onSelectionChangeCallback) {
+      this.onSelectionChangeCallback(this.getSelection());
+    }
   }
 }

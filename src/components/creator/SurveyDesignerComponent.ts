@@ -1,6 +1,7 @@
 import { DomUtils } from '@/utils/common';
 import { SurveyCreatorService } from '@/services/surveyCreator';
 import { showNotification } from './uiUtils';
+import { PropertyEditorComponent } from './PropertyEditorComponent';
 
 /**
  * Survey Designer UI Component
@@ -8,9 +9,11 @@ import { showNotification } from './uiUtils';
  */
 export class SurveyDesignerComponent {
   private surveyCreatorService: SurveyCreatorService;
+  private propertyEditorComponent: PropertyEditorComponent;
 
   constructor(surveyCreatorService: SurveyCreatorService) {
     this.surveyCreatorService = surveyCreatorService;
+    this.propertyEditorComponent = new PropertyEditorComponent(surveyCreatorService);
   }
 
   /**
@@ -33,13 +36,20 @@ export class SurveyDesignerComponent {
               <input type="file" id="load-survey-input" class="hidden" accept=".json">
             </label>
           </div>
-          <div id="survey-creator-container" class="min-h-96 border border-gray-200 rounded-lg">
-            <div class="text-center py-12 text-gray-500">
-              <svg class="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-              <h3 class="mt-2 text-sm font-medium text-gray-900">No Survey Loaded</h3>
-              <p class="mt-1 text-sm text-gray-500">Create a new survey or load an existing one to get started</p>
+          <div class="flex gap-4" style="height: 600px;">
+            <!-- Left side: Survey Creator Canvas (70%) -->
+            <div id="survey-creator-container" class="flex-1 border border-gray-200 rounded-lg overflow-auto">
+              <div class="text-center py-12 text-gray-500">
+                <svg class="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <h3 class="mt-2 text-sm font-medium text-gray-900">No Survey Loaded</h3>
+                <p class="mt-1 text-sm text-gray-500">Create a new survey or load an existing one to get started</p>
+              </div>
+            </div>
+            <!-- Right side: Property Editor (30%) -->
+            <div id="property-editor-container" class="w-96 border border-gray-200 rounded-lg overflow-hidden">
+              <!-- Property editor will be rendered here -->
             </div>
           </div>
         </div>
@@ -56,9 +66,13 @@ export class SurveyDesignerComponent {
     const newSurveyBtn = container.querySelector('#new-survey-btn');
     const loadSurveyInput = container.querySelector('#load-survey-input') as HTMLInputElement;
     const creatorContainer = container.querySelector('#survey-creator-container')!;
+    const propertyEditorContainer = container.querySelector('#property-editor-container')!;
 
     // Initialize the SurveyCreatorService with the container
     this.surveyCreatorService.initialize(creatorContainer as HTMLElement);
+
+    // Initialize the PropertyEditorComponent
+    this.propertyEditorComponent.initialize(propertyEditorContainer as HTMLElement);
 
     newSurveyBtn?.addEventListener('click', () => {
       this.createNewSurvey();

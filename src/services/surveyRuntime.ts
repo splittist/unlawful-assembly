@@ -1,4 +1,5 @@
 import type { SurveyDefinition, SurveyElement } from '@/types';
+import { VisibilityManager } from './visibilityManager';
 
 /**
  * Survey.js Runtime integration service
@@ -7,6 +8,8 @@ import type { SurveyDefinition, SurveyElement } from '@/types';
 export class SurveyRuntimeService {
   private container: HTMLElement | null = null;
   private onCompleteCallback: ((data: any) => void) | null = null;
+  private visibilityManager: VisibilityManager | null = null;
+  private surveyDefinition: SurveyDefinition | null = null;
 
   /**
    * Initialize the Survey.js runtime
@@ -23,13 +26,19 @@ export class SurveyRuntimeService {
   ): void {
     this.container = container;
     this.onCompleteCallback = onComplete || null;
-    
+    this.surveyDefinition = surveyJson;
+
     // Render form based on mode
     if (mode === 'preview') {
       this.renderPreviewForm(container, surveyJson);
     } else {
       this.renderSimpleForm(container, surveyJson);
     }
+
+    // Initialize visibility manager for conditional logic
+    this.visibilityManager = new VisibilityManager(surveyJson, container);
+    this.visibilityManager.setupFormWatching(container);
+    this.visibilityManager.initializeVisibility();
   }
 
   /**
@@ -480,5 +489,7 @@ export class SurveyRuntimeService {
   dispose(): void {
     this.container = null;
     this.onCompleteCallback = null;
+    this.visibilityManager = null;
+    this.surveyDefinition = null;
   }
 }

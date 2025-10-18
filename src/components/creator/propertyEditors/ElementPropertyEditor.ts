@@ -39,6 +39,9 @@ export class ElementPropertyEditor {
     // Common properties section
     const commonPropertiesHtml = this.renderCommonProperties(element);
 
+    // Visibility properties section
+    const visibilityHtml = this.renderVisibilityProperties(element);
+
     // Type-specific properties section
     const typeSpecificHtml = this.renderTypeSpecificProperties(element);
 
@@ -48,6 +51,12 @@ export class ElementPropertyEditor {
           <h4 class="text-xs font-semibold text-gray-500 uppercase mb-3">Common Properties</h4>
           ${commonPropertiesHtml}
         </div>
+        ${visibilityHtml ? `
+          <div>
+            <h4 class="text-xs font-semibold text-gray-500 uppercase mb-3">Visibility</h4>
+            ${visibilityHtml}
+          </div>
+        ` : ''}
         ${typeSpecificHtml ? `
           <div>
             <h4 class="text-xs font-semibold text-gray-500 uppercase mb-3">Type-Specific Properties</h4>
@@ -124,6 +133,42 @@ export class ElementPropertyEditor {
   }
 
   /**
+   * Render visibility properties section
+   */
+  private renderVisibilityProperties(element: SurveyElement): string {
+    return `
+      <div class="space-y-3">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">
+            Visible If
+            <span class="text-xs text-gray-500 ml-1">(optional)</span>
+          </label>
+          <input
+            type="text"
+            id="element-visible-if"
+            value="${this.escapeHtml(element.visibleIf || '')}"
+            placeholder="e.g., {is_married} or {age} == 18"
+            class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            data-element-name="${element.name}"
+          />
+          <p class="text-xs text-gray-500 mt-1">
+            Use {variable_name} to reference survey answers. Leave empty to always show this question.
+          </p>
+          <div class="mt-2">
+            <p class="text-xs font-medium text-gray-700 mb-1">Examples:</p>
+            <ul class="text-xs text-gray-600 space-y-1">
+              <li><code class="bg-gray-100 px-1 rounded">{is_married}</code> - Show if married</li>
+              <li><code class="bg-gray-100 px-1 rounded">!{has_children}</code> - Show if no children</li>
+              <li><code class="bg-gray-100 px-1 rounded">{age} == 18</code> - Show if age is 18</li>
+              <li><code class="bg-gray-100 px-1 rounded">{status} != single</code> - Show if not single</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  /**
    * Render type-specific properties
    */
   private renderTypeSpecificProperties(element: SurveyElement): string {
@@ -155,6 +200,7 @@ export class ElementPropertyEditor {
     const titleInput = container.querySelector('#element-title') as HTMLInputElement;
     const descriptionInput = container.querySelector('#element-description') as HTMLTextAreaElement;
     const requiredCheckbox = container.querySelector('#element-required') as HTMLInputElement;
+    const visibleIfInput = container.querySelector('#element-visible-if') as HTMLInputElement;
 
     if (nameInput) {
       const elementName = nameInput.dataset.elementName!;
@@ -182,6 +228,13 @@ export class ElementPropertyEditor {
       const elementName = requiredCheckbox.dataset.elementName!;
       requiredCheckbox.addEventListener('change', () => {
         this.surveyCreatorService.updateElementProperty(elementName, 'isRequired', requiredCheckbox.checked);
+      });
+    }
+
+    if (visibleIfInput) {
+      const elementName = visibleIfInput.dataset.elementName!;
+      visibleIfInput.addEventListener('blur', () => {
+        this.surveyCreatorService.updateElementProperty(elementName, 'visibleIf', visibleIfInput.value.trim());
       });
     }
 

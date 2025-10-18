@@ -11,6 +11,7 @@ export interface SurveyElement {
   placeholder?: string;
   defaultValue?: any;
   inputType?: string; // for text inputs (e.g., 'number', 'date', 'email')
+  visibleIf?: string; // Conditional visibility expression
   // Survey.js supports many more properties - allow them
   [key: string]: any;
 }
@@ -20,6 +21,7 @@ export interface SurveyPage {
   title?: string;
   description?: string;
   elements: SurveyElement[];
+  visibleIf?: string; // Conditional visibility expression
 }
 
 export interface SurveyDefinition {

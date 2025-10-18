@@ -113,13 +113,15 @@ export class ExpressionEvaluator {
 
   /**
    * Compare two values using the specified operator
+   * Uses loose equality (==) intentionally to handle type coercion for user convenience.
+   * This allows expressions like {age} == 18 to work whether age is "18" or 18.
    */
   private static compareValues(left: any, right: any, operator: '==' | '!='): boolean {
     switch (operator) {
       case '==':
-        return left == right; // Intentional loose equality
+        return left == right; // Intentional loose equality for type coercion
       case '!=':
-        return left != right; // Intentional loose inequality
+        return left != right; // Intentional loose inequality for type coercion
       default:
         return false;
     }

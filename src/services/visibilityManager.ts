@@ -71,10 +71,12 @@ export class VisibilityManager {
       }
     });
 
-    // Also listen for input events for real-time updates
+    // Also listen for input events for real-time updates on text-based inputs
     formContainer.addEventListener('input', (event) => {
       const target = event.target as HTMLInputElement;
-      if (target.name && (target.type === 'text' || target.type === 'textarea')) {
+      // Real-time updates for text-based inputs
+      const textBasedTypes = ['text', 'textarea', 'email', 'number', 'password', 'search', 'tel', 'url'];
+      if (target.name && (textBasedTypes.includes(target.type) || target.tagName === 'TEXTAREA')) {
         this.handleValueChange(target.name, this.getFieldValue(target.name));
       }
     });
@@ -113,7 +115,8 @@ export class VisibilityManager {
 
     // Handle single field (text, select, etc.)
     const field = fields[0] as HTMLInputElement;
-    return field.value || undefined;
+    // Return undefined for empty values to make them falsy in expressions
+    return field.value === '' ? undefined : field.value;
   }
 
   /**

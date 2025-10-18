@@ -3,6 +3,7 @@ import type { SurveyElement } from '@/types';
 import { TextPropertyEditor } from './TextPropertyEditor';
 import { RadioGroupPropertyEditor } from './RadioGroupPropertyEditor';
 import { DropdownPropertyEditor } from './DropdownPropertyEditor';
+import { CheckboxPropertyEditor } from './CheckboxPropertyEditor';
 import { HtmlPropertyEditor } from './HtmlPropertyEditor';
 
 /**
@@ -14,6 +15,7 @@ export class ElementPropertyEditor {
   private textPropertyEditor: TextPropertyEditor;
   private radioGroupPropertyEditor: RadioGroupPropertyEditor;
   private dropdownPropertyEditor: DropdownPropertyEditor;
+  private checkboxPropertyEditor: CheckboxPropertyEditor;
   private htmlPropertyEditor: HtmlPropertyEditor;
 
   constructor(surveyCreatorService: SurveyCreatorService) {
@@ -21,6 +23,7 @@ export class ElementPropertyEditor {
     this.textPropertyEditor = new TextPropertyEditor(surveyCreatorService);
     this.radioGroupPropertyEditor = new RadioGroupPropertyEditor(surveyCreatorService);
     this.dropdownPropertyEditor = new DropdownPropertyEditor(surveyCreatorService);
+    this.checkboxPropertyEditor = new CheckboxPropertyEditor(surveyCreatorService);
     this.htmlPropertyEditor = new HtmlPropertyEditor(surveyCreatorService);
   }
 
@@ -132,6 +135,8 @@ export class ElementPropertyEditor {
         return this.radioGroupPropertyEditor.render(element);
       case 'dropdown':
         return this.dropdownPropertyEditor.render(element);
+      case 'checkbox':
+        return this.checkboxPropertyEditor.render(element);
       case 'html':
         return this.htmlPropertyEditor.render(element);
       case 'boolean':
@@ -193,6 +198,9 @@ export class ElementPropertyEditor {
           break;
         case 'dropdown':
           this.dropdownPropertyEditor.setupEvents(container, element);
+          break;
+        case 'checkbox':
+          this.checkboxPropertyEditor.setupEvents(container);
           break;
         case 'html':
           this.htmlPropertyEditor.setupEvents(container, element);

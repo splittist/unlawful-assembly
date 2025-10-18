@@ -65,14 +65,17 @@ export class PropertyEditorComponent {
       </div>
     `;
 
-    // Restore scroll position after re-rendering
-    const newContentArea = this.container.querySelector('#property-editor-content');
-    if (newContentArea) {
-      newContentArea.scrollTop = scrollTop;
-    }
-
     // Set up event handlers after rendering
     this.setupEvents();
+
+    // Restore scroll position after re-rendering
+    // Use requestAnimationFrame to ensure DOM is fully rendered
+    const newContentArea = this.container.querySelector('#property-editor-content');
+    if (newContentArea && scrollTop > 0) {
+      requestAnimationFrame(() => {
+        newContentArea.scrollTop = scrollTop;
+      });
+    }
   }
 
   /**

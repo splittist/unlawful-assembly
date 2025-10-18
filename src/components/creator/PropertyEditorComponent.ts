@@ -29,6 +29,11 @@ export class PropertyEditorComponent {
       this.currentSelection = selection;
       this.render();
     });
+
+    // Listen to property updates
+    this.surveyCreatorService.onPropertyUpdate(() => {
+      this.render();
+    });
   }
 
   /**

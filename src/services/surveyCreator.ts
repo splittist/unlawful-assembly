@@ -13,6 +13,7 @@ export class SurveyCreatorService {
   private currentPageIndex: number = 0;
   private selectedElement: PropertyEditorSelection = { type: null };
   private onSelectionChangeCallback: ((selection: PropertyEditorSelection) => void) | null = null;
+  private onPropertyUpdateCallback: (() => void) | null = null;
 
   /**
    * Initialize the lightweight Survey Creator component
@@ -783,6 +784,7 @@ export class SurveyCreatorService {
     this.currentPageIndex = 0;
     this.selectedElement = { type: null };
     this.onSelectionChangeCallback = null;
+    this.onPropertyUpdateCallback = null;
   }
 
   /**
@@ -790,6 +792,13 @@ export class SurveyCreatorService {
    */
   onSelectionChange(callback: (selection: PropertyEditorSelection) => void): void {
     this.onSelectionChangeCallback = callback;
+  }
+
+  /**
+   * Set callback for property updates
+   */
+  onPropertyUpdate(callback: () => void): void {
+    this.onPropertyUpdateCallback = callback;
   }
 
   /**
@@ -868,6 +877,7 @@ export class SurveyCreatorService {
     this.currentPageIndex = savedPageIndex;
     this.selectedElement = savedSelection;
     this.refreshDesignerArea();
+    this.notifyPropertyUpdate();
   }
 
   /**
@@ -887,6 +897,7 @@ export class SurveyCreatorService {
     this.currentPageIndex = savedPageIndex;
     this.selectedElement = savedSelection;
     this.refreshDesignerArea();
+    this.notifyPropertyUpdate();
   }
 
   /**
@@ -902,6 +913,7 @@ export class SurveyCreatorService {
     this.currentPageIndex = savedPageIndex;
     this.selectedElement = savedSelection;
     this.refreshDesignerArea();
+    this.notifyPropertyUpdate();
   }
 
   /**
@@ -936,6 +948,15 @@ export class SurveyCreatorService {
   private notifySelectionChange(): void {
     if (this.onSelectionChangeCallback) {
       this.onSelectionChangeCallback(this.getSelection());
+    }
+  }
+
+  /**
+   * Notify property update listeners
+   */
+  private notifyPropertyUpdate(): void {
+    if (this.onPropertyUpdateCallback) {
+      this.onPropertyUpdateCallback();
     }
   }
 }

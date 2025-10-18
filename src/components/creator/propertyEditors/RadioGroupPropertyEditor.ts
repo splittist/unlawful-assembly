@@ -118,7 +118,7 @@ export class RadioGroupPropertyEditor {
       const elementName = input.dataset.elementName!;
       const choiceIndex = parseInt(input.dataset.choiceIndex || '0');
       
-      input.addEventListener('input', () => {
+      input.addEventListener('blur', () => {
         const el = this.surveyCreatorService.getElementByName(elementName);
         if (el && el.choices) {
           const newChoices = [...el.choices];

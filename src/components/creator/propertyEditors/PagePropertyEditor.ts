@@ -77,21 +77,21 @@ export class PagePropertyEditor {
 
     if (nameInput) {
       const pageIndex = parseInt(nameInput.dataset.pageIndex || '0');
-      nameInput.addEventListener('input', () => {
+      nameInput.addEventListener('blur', () => {
         this.surveyCreatorService.updatePageProperty(pageIndex, 'name', nameInput.value);
       });
     }
 
     if (titleInput) {
       const pageIndex = parseInt(titleInput.dataset.pageIndex || '0');
-      titleInput.addEventListener('input', () => {
+      titleInput.addEventListener('blur', () => {
         this.surveyCreatorService.updatePageProperty(pageIndex, 'title', titleInput.value);
       });
     }
 
     if (descriptionInput) {
       const pageIndex = parseInt(descriptionInput.dataset.pageIndex || '0');
-      descriptionInput.addEventListener('input', () => {
+      descriptionInput.addEventListener('blur', () => {
         this.surveyCreatorService.updatePageProperty(pageIndex, 'description', descriptionInput.value);
       });
     }

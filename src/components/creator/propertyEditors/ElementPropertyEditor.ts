@@ -158,7 +158,7 @@ export class ElementPropertyEditor {
 
     if (nameInput) {
       const elementName = nameInput.dataset.elementName!;
-      nameInput.addEventListener('input', () => {
+      nameInput.addEventListener('blur', () => {
         // Note: Renaming elements requires special handling to update all references
         this.surveyCreatorService.updateElementProperty(elementName, 'name', nameInput.value);
       });
@@ -166,14 +166,14 @@ export class ElementPropertyEditor {
 
     if (titleInput) {
       const elementName = titleInput.dataset.elementName!;
-      titleInput.addEventListener('input', () => {
+      titleInput.addEventListener('blur', () => {
         this.surveyCreatorService.updateElementProperty(elementName, 'title', titleInput.value);
       });
     }
 
     if (descriptionInput) {
       const elementName = descriptionInput.dataset.elementName!;
-      descriptionInput.addEventListener('input', () => {
+      descriptionInput.addEventListener('blur', () => {
         this.surveyCreatorService.updateElementProperty(elementName, 'description', descriptionInput.value);
       });
     }

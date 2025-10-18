@@ -110,7 +110,7 @@ export class DropdownPropertyEditor {
 
     if (placeholderInput) {
       const elementName = placeholderInput.dataset.elementName!;
-      placeholderInput.addEventListener('input', () => {
+      placeholderInput.addEventListener('blur', () => {
         this.surveyCreatorService.updateElementProperty(elementName, 'placeholder', placeholderInput.value);
       });
     }
@@ -138,7 +138,7 @@ export class DropdownPropertyEditor {
       const elementName = input.dataset.elementName!;
       const choiceIndex = parseInt(input.dataset.choiceIndex || '0');
       
-      input.addEventListener('input', () => {
+      input.addEventListener('blur', () => {
         const el = this.surveyCreatorService.getElementByName(elementName);
         if (el && el.choices) {
           const newChoices = [...el.choices];

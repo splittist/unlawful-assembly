@@ -50,13 +50,16 @@ export class HtmlPropertyEditor {
     if (htmlInput && htmlPreview) {
       const elementName = htmlInput.dataset.elementName!;
       
+      // Update preview on input for immediate feedback
       htmlInput.addEventListener('input', () => {
         const htmlContent = htmlInput.value;
-        
-        // Update preview
+        // Update preview only (no property update)
         htmlPreview.innerHTML = htmlContent || '<p class="text-gray-400">No content</p>';
-        
-        // Update element
+      });
+      
+      // Update element property on blur
+      htmlInput.addEventListener('blur', () => {
+        const htmlContent = htmlInput.value;
         this.surveyCreatorService.updateElementProperty(elementName, 'html', htmlContent);
       });
     }

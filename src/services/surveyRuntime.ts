@@ -212,6 +212,34 @@ export class SurveyRuntimeService {
           </div>
         `;
         
+      case 'checkbox':
+        const checkboxChoices = element.choices || [];
+        return `
+          <div class="form-group">
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              ${element.title || element.name} ${requiredMark}
+            </label>
+            <div class="space-y-2">
+              ${checkboxChoices.map((choice) => {
+                const value = typeof choice === 'string' ? choice : choice.value;
+                const text = typeof choice === 'string' ? choice : choice.text;
+                return `
+                <label class="flex items-center">
+                  <input 
+                    type="checkbox" 
+                    name="${element.name}" 
+                    value="${value}"
+                    class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    ${disabledAttr}
+                  />
+                  <span class="ml-2 text-sm text-gray-700">${text}</span>
+                </label>
+              `;
+              }).join('')}
+            </div>
+          </div>
+        `;
+        
       case 'dropdown':
         const dropdownChoices = element.choices || [];
         return `
@@ -417,12 +445,28 @@ export class SurveyRuntimeService {
    */
   loadData(data: Record<string, any>): void {
     Object.entries(data).forEach(([key, value]) => {
-      const field = this.container?.querySelector(`[name="${key}"]`) as HTMLInputElement;
-      if (field) {
-        if (field.type === 'checkbox' || field.type === 'radio') {
-          if (field.value === value) {
-            field.checked = true;
-          }
+      const fields = this.container?.querySelectorAll(`[name="${key}"]`) as NodeListOf<HTMLInputElement>;
+      
+      if (fields.length === 0) return;
+      
+      // Handle checkbox groups (multiple fields with same name)
+      if (fields.length > 1 && fields[0].type === 'checkbox') {
+        const values = Array.isArray(value) ? value : [value];
+        fields.forEach(field => {
+          field.checked = values.includes(field.value);
+        });
+      }
+      // Handle radio groups
+      else if (fields.length > 1 && fields[0].type === 'radio') {
+        fields.forEach(field => {
+          field.checked = field.value === value;
+        });
+      }
+      // Handle single field (text, select, etc.)
+      else if (fields.length === 1) {
+        const field = fields[0];
+        if (field.type === 'checkbox') {
+          field.checked = !!value;
         } else {
           field.value = value as string;
         }

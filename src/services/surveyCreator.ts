@@ -98,6 +98,9 @@ export class SurveyCreatorService {
               <button class="add-question-btn w-full text-left px-3 py-2 text-sm bg-white border border-gray-300 rounded hover:bg-gray-50" data-type="radiogroup">
                 🔘 Radio Buttons
               </button>
+              <button class="add-question-btn w-full text-left px-3 py-2 text-sm bg-white border border-gray-300 rounded hover:bg-gray-50" data-type="checkbox">
+                ☑️ Checkboxes
+              </button>
               <button class="add-question-btn w-full text-left px-3 py-2 text-sm bg-white border border-gray-300 rounded hover:bg-gray-50" data-type="dropdown">
                 📋 Dropdown List
               </button>
@@ -297,6 +300,11 @@ export class SurveyCreatorService {
         newQuestion.choices = ['Option 1', 'Option 2', 'Option 3'];
         newQuestion.isRequired = true;
         break;
+      case 'checkbox':
+        newQuestion.title = 'Checkbox Question';
+        newQuestion.choices = ['Option 1', 'Option 2', 'Option 3'];
+        newQuestion.isRequired = true;
+        break;
       case 'dropdown':
         newQuestion.title = 'Dropdown Question';
         newQuestion.choices = ['Option 1', 'Option 2', 'Option 3'];
@@ -377,6 +385,7 @@ export class SurveyCreatorService {
       comment: '📄 Multi-line Text',
       boolean: '☑️ Yes/No Checkbox',
       radiogroup: '🔘 Radio Buttons',
+      checkbox: '☑️ Checkboxes',
       dropdown: '📋 Dropdown List',
       html: 'ℹ️ Information Text'
     };
@@ -401,7 +410,7 @@ export class SurveyCreatorService {
             onchange="updateQuestion(${index}, 'title', this.value)"
             onclick="event.stopPropagation()"
           />
-          ${question.type === 'radiogroup' || question.type === 'dropdown' ? `
+          ${question.type === 'radiogroup' || question.type === 'dropdown' || question.type === 'checkbox' ? `
             <div>
               <label class="block text-xs font-medium text-gray-700 mb-1">Choices (one per line):</label>
               <textarea 

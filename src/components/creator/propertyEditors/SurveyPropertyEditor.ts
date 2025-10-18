@@ -55,13 +55,13 @@ export class SurveyPropertyEditor {
     const descriptionInput = container.querySelector('#survey-description') as HTMLTextAreaElement;
 
     if (titleInput) {
-      titleInput.addEventListener('input', () => {
+      titleInput.addEventListener('blur', () => {
         this.surveyCreatorService.updateSurveyProperty('title', titleInput.value);
       });
     }
 
     if (descriptionInput) {
-      descriptionInput.addEventListener('input', () => {
+      descriptionInput.addEventListener('blur', () => {
         this.surveyCreatorService.updateSurveyProperty('description', descriptionInput.value);
       });
     }

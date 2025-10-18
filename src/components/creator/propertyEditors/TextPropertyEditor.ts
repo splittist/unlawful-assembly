@@ -76,14 +76,14 @@ export class TextPropertyEditor {
 
     if (placeholderInput) {
       const elementName = placeholderInput.dataset.elementName!;
-      placeholderInput.addEventListener('input', () => {
+      placeholderInput.addEventListener('blur', () => {
         this.surveyCreatorService.updateElementProperty(elementName, 'placeholder', placeholderInput.value);
       });
     }
 
     if (defaultValueInput) {
       const elementName = defaultValueInput.dataset.elementName!;
-      defaultValueInput.addEventListener('input', () => {
+      defaultValueInput.addEventListener('blur', () => {
         this.surveyCreatorService.updateElementProperty(elementName, 'defaultValue', defaultValueInput.value);
       });
     }

@@ -50,6 +50,10 @@ export class PropertyEditorComponent {
   render(): void {
     if (!this.container) return;
 
+    // Save scroll position before re-rendering
+    const contentArea = this.container.querySelector('#property-editor-content');
+    const scrollTop = contentArea?.scrollTop || 0;
+
     this.container.innerHTML = `
       <div class="h-full flex flex-col bg-white border-l border-gray-200">
         <div class="px-4 py-3 border-b border-gray-200 bg-gray-50">
@@ -60,6 +64,12 @@ export class PropertyEditorComponent {
         </div>
       </div>
     `;
+
+    // Restore scroll position after re-rendering
+    const newContentArea = this.container.querySelector('#property-editor-content');
+    if (newContentArea) {
+      newContentArea.scrollTop = scrollTop;
+    }
 
     // Set up event handlers after rendering
     this.setupEvents();

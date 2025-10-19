@@ -38,7 +38,8 @@ export class MarkdownParser {
       .replace(/\n/g, '<br>');
     
     // Wrap in paragraph tags if not already wrapped in block elements
-    if (!html.match(/^<(h[1-6]|ul|ol|blockquote)/)) {
+    const trimmedHtml = html.trim();
+    if (!trimmedHtml.match(/^<(h[1-6]|ul|ol|blockquote)/)) {
       html = `<p>${html}</p>`;
     }
 
@@ -109,7 +110,7 @@ export class MarkdownParser {
 
     return html
       // Headers
-      .replace(/<h([1-6])>(.*?)<\/h[1-6]>/g, (_, level, text) => '#'.repeat(parseInt(level)) + ' ' + text)
+      .replace(/<h([1-6])>(.*?)<\/h\1>/g, (_, level, text) => '#'.repeat(parseInt(level)) + ' ' + text)
       
       // Lists
       .replace(/<ul>/g, '').replace(/<\/ul>/g, '')

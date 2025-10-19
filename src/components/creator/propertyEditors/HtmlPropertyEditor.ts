@@ -101,6 +101,8 @@ export class HtmlPropertyEditor {
           MarkdownParser.toHtml(htmlInput.value) : 
           htmlInput.value;
         // Update preview only (no property update)
+        // Note: innerHTML is intentional here - creators need to preview HTML content
+        // This is in the creator interface (trusted users), not end-user facing
         htmlPreview.innerHTML = htmlContent || '<p class="text-gray-400">No content</p>';
       });
       

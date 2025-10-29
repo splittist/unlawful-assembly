@@ -1,5 +1,4 @@
 import { FieldMappingService } from '@/services/fieldMapping';
-import { SurveyCreatorService } from '@/services/surveyCreator';
 import { showNotification, getTypeColor } from './uiUtils';
 
 /**
@@ -8,11 +7,9 @@ import { showNotification, getTypeColor } from './uiUtils';
  */
 export class MappingInterfaceComponent {
   private mappingService: FieldMappingService;
-  private surveyCreatorService: SurveyCreatorService;
 
-  constructor(mappingService: FieldMappingService, surveyCreatorService: SurveyCreatorService) {
+  constructor(mappingService: FieldMappingService) {
     this.mappingService = mappingService;
-    this.surveyCreatorService = surveyCreatorService;
   }
 
   public render(container: HTMLElement): void {

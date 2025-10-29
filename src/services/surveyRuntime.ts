@@ -9,7 +9,6 @@ export class SurveyRuntimeService {
   private container: HTMLElement | null = null;
   private onCompleteCallback: ((data: any) => void) | null = null;
   private visibilityManager: VisibilityManager | null = null;
-  private surveyDefinition: SurveyDefinition | null = null;
 
   /**
    * Initialize the Survey.js runtime
@@ -26,7 +25,6 @@ export class SurveyRuntimeService {
   ): void {
     this.container = container;
     this.onCompleteCallback = onComplete || null;
-    this.surveyDefinition = surveyJson;
 
     // Render form based on mode
     if (mode === 'preview') {
@@ -490,6 +488,5 @@ export class SurveyRuntimeService {
     this.container = null;
     this.onCompleteCallback = null;
     this.visibilityManager = null;
-    this.surveyDefinition = null;
   }
 }

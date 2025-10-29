@@ -9,8 +9,6 @@ import { DocumentGeneratorService } from '@/services/documentGenerator';
  */
 class UserApp {
   private container: HTMLElement;
-  private loadedPackage: PackageContent | null = null;
-  private currentSurveyResponses: any = {};
 
   constructor() {
     this.container = document.querySelector<HTMLDivElement>('#user-app')!;
@@ -325,7 +323,6 @@ class UserApp {
 
       // Import package using PackageService
       const packageContent = await PackageService.importPackage(file);
-      this.loadedPackage = packageContent;
       
       console.log('Package loaded successfully:', packageContent.metadata.title);
       
@@ -479,7 +476,6 @@ class UserApp {
         ]
       };
 
-      this.loadedPackage = demoPackage;
       console.log('Demo package loaded successfully');
       
       // Render the survey from the demo package
@@ -517,8 +513,6 @@ class UserApp {
   private async handleSurveyComplete(surveyData: any, packageContent: PackageContent): Promise<void> {
     console.log('Survey completed, generating document...', { surveyData, packageContent: packageContent.metadata.title });
     
-    this.currentSurveyResponses = surveyData;
-    
     const mainContent = this.container.querySelector('#main-content')!;
     
     try {
@@ -530,12 +524,12 @@ class UserApp {
 
       // Check if package has template and mappings
       if (!packageContent.template) {
-        this.showDocumentGenerationUI(surveyData, packageContent);
+        this.showDocumentGenerationUI(surveyData);
         return;
       }
 
       if (!packageContent.mappings || packageContent.mappings.length === 0) {
-        this.showMappingRequiredMessage(surveyData, packageContent);
+        this.showMappingRequiredMessage();
         return;
       }
 
@@ -551,7 +545,7 @@ class UserApp {
     }
   }
 
-  private showDocumentGenerationUI(surveyData: any, packageContent: PackageContent): void {
+  private showDocumentGenerationUI(surveyData: any): void {
     const mainContent = this.container.querySelector('#main-content')!;
     
     mainContent.innerHTML = `
@@ -594,7 +588,7 @@ class UserApp {
     `;
   }
 
-  private showMappingRequiredMessage(surveyData: any, packageContent: PackageContent): void {
+  private showMappingRequiredMessage(): void {
     const mainContent = this.container.querySelector('#main-content')!;
     
     mainContent.innerHTML = `

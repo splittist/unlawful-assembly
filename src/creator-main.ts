@@ -32,8 +32,7 @@ class CreatorApp {
     this.surveyDesignerComponent = new SurveyDesignerComponent(this.surveyCreatorService);
     this.templateManagerComponent = new TemplateManagerComponent();
     this.mappingInterfaceComponent = new MappingInterfaceComponent(
-      this.mappingService,
-      this.surveyCreatorService
+      this.mappingService
     );
     this.packageDefinitionComponent = new PackageDefinitionComponent(
       this.mappingService,

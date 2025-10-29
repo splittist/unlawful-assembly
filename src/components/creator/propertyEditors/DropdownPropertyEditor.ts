@@ -101,7 +101,7 @@ export class DropdownPropertyEditor {
   /**
    * Set up event handlers after rendering
    */
-  setupEvents(container: HTMLElement, element: SurveyElement): void {
+  setupEvents(container: HTMLElement): void {
     const placeholderInput = container.querySelector('#element-placeholder') as HTMLInputElement;
     const defaultValueSelect = container.querySelector('#element-default-value') as HTMLSelectElement;
     const addChoiceBtn = container.querySelector('#add-choice-btn') as HTMLButtonElement;

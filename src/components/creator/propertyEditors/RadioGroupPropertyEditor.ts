@@ -17,7 +17,6 @@ export class RadioGroupPropertyEditor {
    */
   render(element: SurveyElement): string {
     const choices = element.choices || [];
-    const choicesText = choices.map(c => (typeof c === 'string' ? c : c.value)).join('\n');
 
     return `
       <div class="space-y-4">
@@ -89,7 +88,7 @@ export class RadioGroupPropertyEditor {
   /**
    * Set up event handlers after rendering
    */
-  setupEvents(container: HTMLElement, element: SurveyElement): void {
+  setupEvents(container: HTMLElement): void {
     const defaultValueSelect = container.querySelector('#element-default-value') as HTMLSelectElement;
     const addChoiceBtn = container.querySelector('#add-choice-btn') as HTMLButtonElement;
     const choiceInputs = container.querySelectorAll('.choice-input') as NodeListOf<HTMLInputElement>;

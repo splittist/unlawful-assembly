@@ -1,4 +1,3 @@
-import type { SurveyDefinition } from '@/types';
 import type { DocxPlaceholder } from './docxParser';
 
 /**

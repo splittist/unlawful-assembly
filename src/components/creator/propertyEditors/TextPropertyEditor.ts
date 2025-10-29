@@ -69,7 +69,7 @@ export class TextPropertyEditor {
   /**
    * Set up event handlers after rendering
    */
-  setupEvents(container: HTMLElement, element: SurveyElement): void {
+  setupEvents(container: HTMLElement): void {
     const placeholderInput = container.querySelector('#element-placeholder') as HTMLInputElement;
     const defaultValueInput = container.querySelector('#element-default-value') as HTMLInputElement;
     const inputTypeSelect = container.querySelector('#element-input-type') as HTMLSelectElement;

@@ -244,13 +244,13 @@ export class ElementPropertyEditor {
       switch (element.type) {
         case 'text':
         case 'comment':
-          this.textPropertyEditor.setupEvents(container, element);
+          this.textPropertyEditor.setupEvents(container);
           break;
         case 'radiogroup':
-          this.radioGroupPropertyEditor.setupEvents(container, element);
+          this.radioGroupPropertyEditor.setupEvents(container);
           break;
         case 'dropdown':
-          this.dropdownPropertyEditor.setupEvents(container, element);
+          this.dropdownPropertyEditor.setupEvents(container);
           break;
         case 'checkbox':
           this.checkboxPropertyEditor.setupEvents(container);

@@ -30,7 +30,6 @@ export class DocxParserService {
   private static readonly PLACEHOLDER_REGEX = /\{\{([^}]+)\}\}/g;
   private static readonly CONDITIONAL_REGEX = /\{\{#([^}]+)\}\}(.*?)\{\{\/\1\}\}/gs;
   private static readonly INVERTED_CONDITIONAL_REGEX = /\{\{\^([^}]+)\}\}(.*?)\{\{\/\1\}\}/gs;
-  private static readonly LOOP_REGEX = /\{\{#([^}]+)\}\}(.*?)\{\{\/\1\}\}/gs;
 
   /**
    * Parse a DOCX file and extract placeholders
@@ -157,7 +156,7 @@ export class DocxParserService {
         
         placeholders.push({
           name: fieldName,
-          type: this.isLoopField(fieldName, content) ? 'loop' : 'conditional',
+          type: this.isLoopField(content) ? 'loop' : 'conditional',
           fullMatch: match[0],
           context: context,
           isRequired: false
@@ -227,7 +226,7 @@ export class DocxParserService {
   /**
    * Determine if a field is likely a loop based on its content
    */
-  private static isLoopField(fieldName: string, content: string): boolean {
+  private static isLoopField(content: string): boolean {
     // Check if content contains array-like patterns
     const arrayIndicators = [
       /\{\{\.\}\}/, // {{.}} indicates current item in loop

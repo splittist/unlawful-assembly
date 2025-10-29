@@ -22,3 +22,12 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Test files with personal/sensitive data
+tests/fixtures/*.docx
+tests/fixtures/*.doc
+tests/fixtures/personal-*
+tests/fixtures/*-private.*
+
+# Coverage reports
+coverage/

@@ -1,0 +1,202 @@
+[
+  {
+    "id": "1",
+    "surveyField": "employee_name",
+    "placeholder": "{employee_name}",
+    "placeholderType": "simple",
+    "isRequired": true,
+    "isValid": true,
+    "confidence": 1.0,
+    "notes": "Employee full name for contract"
+  },
+  {
+    "id": "2", 
+    "surveyField": "company_name",
+    "placeholder": "{company_name}",
+    "placeholderType": "simple",
+    "isRequired": true,
+    "isValid": true,
+    "confidence": 1.0,
+    "notes": "Company name"
+  },
+  {
+    "id": "3",
+    "surveyField": "job_title",
+    "placeholder": "{job_title}",
+    "placeholderType": "simple",
+    "isRequired": true,
+    "isValid": true,
+    "confidence": 1.0,
+    "notes": "Position title"
+  },
+  {
+    "id": "4",
+    "surveyField": "start_date",
+    "placeholder": "{start_date}",
+    "placeholderType": "simple", 
+    "isRequired": true,
+    "isValid": true,
+    "confidence": 1.0,
+    "notes": "Employment start date"
+  },
+  {
+    "id": "5",
+    "surveyField": "department",
+    "placeholder": "{department}",
+    "placeholderType": "simple",
+    "isRequired": false,
+    "isValid": true,
+    "confidence": 0.9,
+    "notes": "Department assignment"
+  },
+  {
+    "id": "6",
+    "surveyField": "manager_name", 
+    "placeholder": "{manager_name}",
+    "placeholderType": "simple",
+    "isRequired": false,
+    "isValid": true,
+    "confidence": 0.9,
+    "notes": "Reporting manager"
+  },
+  {
+    "id": "7",
+    "surveyField": "employment_type",
+    "placeholder": "{employment_type}",
+    "placeholderType": "simple",
+    "isRequired": true,
+    "isValid": true,
+    "confidence": 1.0,
+    "notes": "Full-time, part-time, etc."
+  },
+  {
+    "id": "8",
+    "surveyField": "is_salary_based",
+    "placeholder": "{is_salary_based}",
+    "placeholderType": "conditional",
+    "isRequired": true,
+    "isValid": true,
+    "confidence": 1.0,
+    "notes": "Controls salary vs hourly sections"
+  },
+  {
+    "id": "9",
+    "surveyField": "annual_salary",
+    "placeholder": "{annual_salary}",
+    "placeholderType": "simple",
+    "isRequired": false,
+    "isValid": true,
+    "confidence": 1.0,
+    "notes": "Annual salary amount"
+  },
+  {
+    "id": "10",
+    "surveyField": "pay_frequency",
+    "placeholder": "{pay_frequency}",
+    "placeholderType": "simple",
+    "isRequired": false,
+    "isValid": true,
+    "confidence": 0.8,
+    "notes": "How often salary is paid"
+  },
+  {
+    "id": "11",
+    "surveyField": "hourly_rate",
+    "placeholder": "{hourly_rate}",
+    "placeholderType": "simple",
+    "isRequired": false,
+    "isValid": true,
+    "confidence": 1.0,
+    "notes": "Hourly compensation rate"
+  },
+  {
+    "id": "12",
+    "surveyField": "weekly_hours",
+    "placeholder": "{weekly_hours}",
+    "placeholderType": "simple",
+    "isRequired": false,
+    "isValid": true,
+    "confidence": 0.8,
+    "notes": "Expected weekly work hours"
+  },
+  {
+    "id": "13",
+    "surveyField": "has_benefits",
+    "placeholder": "{has_benefits}",
+    "placeholderType": "conditional", 
+    "isRequired": true,
+    "isValid": true,
+    "confidence": 1.0,
+    "notes": "Controls benefits section display"
+  },
+  {
+    "id": "14",
+    "surveyField": "benefit_list",
+    "placeholder": "{benefit_list}",
+    "placeholderType": "loop",
+    "isRequired": false,
+    "isValid": true,
+    "confidence": 0.9,
+    "notes": "List of selected benefits"
+  },
+  {
+    "id": "15",
+    "surveyField": "has_health_insurance",
+    "placeholder": "{has_health_insurance}",
+    "placeholderType": "conditional",
+    "isRequired": false,
+    "isValid": true,
+    "confidence": 0.8,
+    "notes": "Health insurance availability"
+  },
+  {
+    "id": "16",
+    "surveyField": "is_remote",
+    "placeholder": "{is_remote}",
+    "placeholderType": "conditional",
+    "isRequired": true,
+    "isValid": true,
+    "confidence": 1.0,
+    "notes": "Remote vs office work location"
+  },
+  {
+    "id": "17",
+    "surveyField": "office_address",
+    "placeholder": "{office_address}",
+    "placeholderType": "simple",
+    "isRequired": false,
+    "isValid": true,
+    "confidence": 0.9,
+    "notes": "Physical office location"
+  },
+  {
+    "id": "18",
+    "surveyField": "working_hours",
+    "placeholder": "{working_hours}",
+    "placeholderType": "simple",
+    "isRequired": false,
+    "isValid": true,
+    "confidence": 0.7,
+    "notes": "Standard working hours"
+  },
+  {
+    "id": "19",
+    "surveyField": "response_deadline",
+    "placeholder": "{response_deadline}",
+    "placeholderType": "simple",
+    "isRequired": false,
+    "isValid": true,
+    "confidence": 0.8,
+    "notes": "Deadline for contract response"
+  },
+  {
+    "id": "20",
+    "surveyField": "hr_manager_name",
+    "placeholder": "{hr_manager_name}",
+    "placeholderType": "simple",
+    "isRequired": false,
+    "isValid": true,
+    "confidence": 0.9,
+    "notes": "HR manager contact person"
+  }
+]

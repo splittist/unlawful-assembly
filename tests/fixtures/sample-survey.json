@@ -1,0 +1,206 @@
+{
+  "title": "Employment Contract Information",
+  "description": "Please provide your employment details for contract generation.",
+  "logoPosition": "right",
+  "pages": [
+    {
+      "name": "basicInfo",
+      "title": "Basic Information",
+      "elements": [
+        {
+          "type": "text",
+          "name": "employee_name",
+          "title": "Full Name",
+          "isRequired": true,
+          "placeholder": "Enter your full legal name"
+        },
+        {
+          "type": "text",
+          "name": "company_name", 
+          "title": "Company Name",
+          "isRequired": true,
+          "placeholder": "Enter the company name"
+        },
+        {
+          "type": "text",
+          "name": "job_title",
+          "title": "Job Title",
+          "isRequired": true,
+          "placeholder": "Enter your job title"
+        },
+        {
+          "type": "text",
+          "name": "department",
+          "title": "Department",
+          "isRequired": false,
+          "placeholder": "Enter your department"
+        }
+      ]
+    },
+    {
+      "name": "employmentDetails",
+      "title": "Employment Details", 
+      "elements": [
+        {
+          "type": "text",
+          "name": "start_date",
+          "title": "Start Date",
+          "inputType": "date",
+          "isRequired": true
+        },
+        {
+          "type": "text",
+          "name": "manager_name",
+          "title": "Reporting Manager",
+          "isRequired": false,
+          "placeholder": "Enter your manager's name"
+        },
+        {
+          "type": "radiogroup",
+          "name": "employment_type",
+          "title": "Employment Type",
+          "isRequired": true,
+          "choices": [
+            "Full-time",
+            "Part-time", 
+            "Contract",
+            "Intern"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "compensation",
+      "title": "Compensation",
+      "elements": [
+        {
+          "type": "boolean",
+          "name": "is_salary_based",
+          "title": "Is this a salaried position?",
+          "isRequired": true
+        },
+        {
+          "type": "text",
+          "name": "annual_salary",
+          "title": "Annual Salary",
+          "inputType": "number",
+          "visibleIf": "{is_salary_based} = true",
+          "placeholder": "Enter annual salary amount"
+        },
+        {
+          "type": "radiogroup",
+          "name": "pay_frequency",
+          "title": "Pay Frequency",
+          "visibleIf": "{is_salary_based} = true",
+          "choices": [
+            "Weekly",
+            "Bi-weekly", 
+            "Monthly"
+          ]
+        },
+        {
+          "type": "text",
+          "name": "hourly_rate",
+          "title": "Hourly Rate",
+          "inputType": "number",
+          "visibleIf": "{is_salary_based} = false",
+          "placeholder": "Enter hourly rate"
+        },
+        {
+          "type": "text",
+          "name": "weekly_hours",
+          "title": "Expected Weekly Hours",
+          "inputType": "number",
+          "visibleIf": "{is_salary_based} = false",
+          "placeholder": "Enter expected hours per week"
+        }
+      ]
+    },
+    {
+      "name": "benefits",
+      "title": "Benefits & Location",
+      "elements": [
+        {
+          "type": "boolean",
+          "name": "has_benefits", 
+          "title": "Does this position include benefits?",
+          "isRequired": true
+        },
+        {
+          "type": "checkbox",
+          "name": "benefit_list",
+          "title": "Select applicable benefits:",
+          "visibleIf": "{has_benefits} = true",
+          "choices": [
+            "Health Insurance",
+            "Dental Coverage",
+            "Vision Coverage", 
+            "401k Retirement Plan",
+            "Paid Time Off",
+            "Life Insurance",
+            "Disability Insurance"
+          ]
+        },
+        {
+          "type": "boolean",
+          "name": "has_health_insurance",
+          "title": "Health insurance included?",
+          "visibleIf": "{has_benefits} = true"
+        },
+        {
+          "type": "boolean",
+          "name": "is_remote",
+          "title": "Is this a remote position?",
+          "isRequired": true
+        },
+        {
+          "type": "text",
+          "name": "office_address",
+          "title": "Office Address",
+          "visibleIf": "{is_remote} = false",
+          "placeholder": "Enter the office address"
+        },
+        {
+          "type": "text",
+          "name": "working_hours",
+          "title": "Working Hours",
+          "visibleIf": "{is_remote} = false",
+          "placeholder": "e.g., 9:00 AM - 5:00 PM"
+        }
+      ]
+    },
+    {
+      "name": "responsibilities",
+      "title": "Job Responsibilities",
+      "elements": [
+        {
+          "type": "comment",
+          "name": "job_responsibilities_text",
+          "title": "Please describe the main job responsibilities:",
+          "isRequired": false,
+          "placeholder": "Enter key responsibilities and duties..."
+        }
+      ]
+    },
+    {
+      "name": "final",
+      "title": "Final Details",
+      "elements": [
+        {
+          "type": "text",
+          "name": "response_deadline",
+          "title": "Response Deadline", 
+          "inputType": "date",
+          "isRequired": false
+        },
+        {
+          "type": "text",
+          "name": "hr_manager_name",
+          "title": "HR Manager Name",
+          "isRequired": false,
+          "placeholder": "Enter HR manager's name"
+        }
+      ]
+    }
+  ]
+}

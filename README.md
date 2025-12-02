@@ -5,7 +5,7 @@ A client-side web application that enables legal professionals to create surveys
 ## Features
 
 ### Document Assembly Creator (`creator.html`)
-- **Survey Designer**: Drag-and-drop question builder using Survey.js Creator
+- **Survey Designer**: Drag-and-drop question builder
 - **Template Manager**: DOCX upload with automatic placeholder detection
 - **Mapping Interface**: Visual field mapping with auto-suggestions
 - **Package Definition**: Bundle surveys, templates, and mappings into ZIP packages
@@ -14,7 +14,6 @@ A client-side web application that enables legal professionals to create surveys
 - **Package Loading**: Upload ZIP packages with validation
 - **Survey Completion**: Dynamic form rendering with validation
 - **Document Generation**: Automatic DOCX creation using docxtemplater
-- **Demo Package**: Sample employment contract for testing
 
 ## Quick Start
 
@@ -27,14 +26,14 @@ A client-side web application that enables legal professionals to create surveys
 
 ### For End Users
 1. Open `index.html` in your browser
-2. Load a package (ZIP file) or try the demo
+2. Load a package (ZIP file)
 3. Complete the survey form
 4. Generate and download your customized document
 
 ## Technical Stack
 
 - **Frontend**: TypeScript, Vite, Tailwind CSS
-- **Survey Engine**: Survey.js Creator & Core
+- **Survey Engine**: Survey.js Core
 - **Document Processing**: docxtemplater, PizZip
 - **File Handling**: FileSaver.js, HTML5 File API
 
@@ -68,6 +67,17 @@ npm run preview
 
 The application is client-side only and can be deployed to any static hosting service.
 
+## Available Scripts
+
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm run preview` - Preview production build
+- `npm run lint` - Run ESLint
+- `npm run format` - Format code with Prettier
+- `npm run test` - Run tests in watch mode
+- `npm run test:run` - Run tests once
+- `npm run test:coverage` - Run tests with coverage
+
 ## Architecture
 
 The application follows a modular service-oriented design:
@@ -82,6 +92,8 @@ The application follows a modular service-oriented design:
 - **[USER-GUIDE.md](USER-GUIDE.md)**: Comprehensive user documentation
 - **[TECHNICAL-DOCS.md](TECHNICAL-DOCS.md)**: Technical architecture details
 - **[TESTING-CHECKLIST.md](TESTING-CHECKLIST.md)**: Testing procedures
+- **[TESTING-SETUP.md](TESTING-SETUP.md)**: Testing infrastructure guide
+- **[TEMPLATE-TROUBLESHOOTING.md](TEMPLATE-TROUBLESHOOTING.md)**: Template creation troubleshooting
 
 ## Browser Support
 

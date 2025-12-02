@@ -17,10 +17,61 @@ export function createMockFile(
 
 /**
  * Create a mock ArrayBuffer for DOCX content
+ * This creates a valid minimal DOCX ZIP structure that docxtemplater can process
  */
-export function createMockDocxBuffer(content: string = 'mock docx content'): ArrayBuffer {
-  const encoder = new TextEncoder();
-  return encoder.encode(content).buffer;
+export function createMockDocxBuffer(
+  content: string = 'Mock template with {employee_name} and {company_name}'
+): ArrayBuffer {
+  // Use dynamic import to handle the module loading in the test context
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const PizZip = require('pizzip');
+
+  const zip = new PizZip();
+
+  // Create the minimal DOCX structure
+  zip.file(
+    '[Content_Types].xml',
+    `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+  <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+  <Default Extension="xml" ContentType="application/xml"/>
+  <Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>
+</Types>`
+  );
+
+  zip.file(
+    '_rels/.rels',
+    `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>
+</Relationships>`
+  );
+
+  zip.file(
+    'word/_rels/document.xml.rels',
+    `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+</Relationships>`
+  );
+
+  // Create document.xml with the mock content including placeholders
+  zip.file(
+    'word/document.xml',
+    `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+  <w:body>
+    <w:p>
+      <w:r>
+        <w:t>${content}</w:t>
+      </w:r>
+    </w:p>
+  </w:body>
+</w:document>`
+  );
+
+  // Generate the ZIP as a Uint8Array and return its buffer
+  const uint8Array = zip.generate({ type: 'uint8array' });
+  return uint8Array.buffer;
 }
 
 /**

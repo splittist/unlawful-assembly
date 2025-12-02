@@ -98,18 +98,18 @@ export class TemplateManagerComponent {
               <div>
                 <h4 class="font-medium text-gray-900 mb-2">Complex Example:</h4>
                 <div class="bg-blue-50 p-4 rounded border border-blue-200">
-                  <pre class="text-sm font-mono leading-relaxed">\{\{#is_full_time\}\}
+                  <pre class="text-sm font-mono leading-relaxed">${'{{'}#is_full_time${'}}'}
 Full-time employment benefits include:
 • Health insurance
-• \{\{#has_dental\}\}Dental coverage\{\{/has_dental\}\}
-• \{\{vacation_days\}\} vacation days per year
-\{\{/is_full_time\}\}
+• ${'{{'}#has_dental${'}}'}Dental coverage${'{{'}/has_dental${'}}'}
+• ${'{{'}vacation_days${'}}'}  vacation days per year
+${'{{'}/is_full_time${'}}'}
 
-\{\{^is_full_time\}\}
+${'{{'}^is_full_time${'}}'}
 Part-time employment terms:
-• Hourly rate: $\{\{hourly_rate\}\}
-• Scheduled hours: \{\{weekly_hours\}\} per week
-\{\{/is_full_time\}\}</pre>
+• Hourly rate: $${'{{'}hourly_rate${'}}'}
+• Scheduled hours: ${'{{'}weekly_hours${'}}'}  per week
+${'{{'}/is_full_time${'}}'}</pre>
                 </div>
               </div>
             </div>
@@ -150,11 +150,11 @@ Part-time employment terms:
                 <h4 class="font-medium text-gray-900 mb-2">Complex Example:</h4>
                 <div class="bg-blue-50 p-4 rounded border border-blue-200">
                   <pre class="text-sm font-mono leading-relaxed">Job Responsibilities:
-\{\{#job_duties\}\}
-\{\{@index\}\}. \{\{title\}\}
-   Description: \{\{description\}\}
-   \{\{#required_skills\}\}• \{\{.\}\}\{\{/required_skills\}\}
-\{\{/job_duties\}\}</pre>
+${'{{'}#job_duties${'}}'}
+${'{{'}@index${'}}'}.  ${'{{'}title${'}}'}
+   Description: ${'{{'}description${'}}'}
+   ${'{{'}#required_skills${'}}'}• ${'{{'}.${'}}'}${'{{'}/required_skills${'}}'}
+${'{{'}/job_duties${'}}'}</pre>
                 </div>
                 </div>
               </div>

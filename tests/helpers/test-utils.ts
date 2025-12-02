@@ -1,13 +1,15 @@
 /**
- * Test utilities for Document Assembly MVP
+ * Test utilities for Document Assembly Tool
  * Common functions and helpers for testing
  */
+
+import PizZip from 'pizzip';
 
 /**
  * Create a mock File object for testing file uploads
  */
 export function createMockFile(
-  content: string, 
+  content: string,
   filename: string, 
   mimeType: string = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
 ): File {
@@ -22,10 +24,6 @@ export function createMockFile(
 export function createMockDocxBuffer(
   content: string = 'Mock template with {employee_name} and {company_name}'
 ): ArrayBuffer {
-  // Use dynamic import to handle the module loading in the test context
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const PizZip = require('pizzip');
-
   const zip = new PizZip();
 
   // Create the minimal DOCX structure

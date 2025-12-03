@@ -23,7 +23,8 @@
     "docxtemplater": "^3.47.5",
     "file-saver": "^2.0.5",
     "pizzip": "^3.1.7",
-    "survey-core": "^1.9.131"
+    "survey-core": "^1.9.131",
+    "survey-js-ui": "^1.12.57"
   },
   "devDependencies": {
     "@testing-library/dom": "^9.3.4",

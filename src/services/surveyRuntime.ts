@@ -1,14 +1,28 @@
-import type { SurveyDefinition, SurveyElement } from '@/types';
-import { VisibilityManager } from './visibilityManager';
+import type { SurveyDefinition } from '@/types';
+import { SurveyModel } from 'survey-core';
+import { renderSurvey } from 'survey-js-ui';
+
+// Import Survey.js CSS for proper styling
+import 'survey-core/defaultV2.min.css';
+
+/**
+ * Escape HTML special characters to prevent XSS attacks
+ */
+function escapeHtml(text: string): string {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
 
 /**
  * Survey.js Runtime integration service
  * Handles survey rendering and data collection for users and preview mode
+ * Uses full Survey.js integration for form rendering with all features
  */
 export class SurveyRuntimeService {
   private container: HTMLElement | null = null;
-  private onCompleteCallback: ((data: any) => void) | null = null;
-  private visibilityManager: VisibilityManager | null = null;
+  private onCompleteCallback: ((data: Record<string, unknown>) => void) | null = null;
+  private surveyModel: SurveyModel | null = null;
 
   /**
    * Initialize the Survey.js runtime
@@ -20,366 +34,47 @@ export class SurveyRuntimeService {
   initialize(
     container: HTMLElement,
     surveyJson: SurveyDefinition,
-    onComplete?: (data: any) => void,
+    onComplete?: (data: Record<string, unknown>) => void,
     mode: 'user' | 'preview' = 'user'
   ): void {
     this.container = container;
     this.onCompleteCallback = onComplete || null;
 
-    // Render form based on mode
+    // Create Survey.js model from the JSON definition
+    this.surveyModel = new SurveyModel(surveyJson);
+
+    // Configure survey based on mode
     if (mode === 'preview') {
-      this.renderPreviewForm(container, surveyJson);
+      // Preview mode: display-only, no submission
+      this.surveyModel.mode = 'display';
+      this.surveyModel.showNavigationButtons = false;
+      this.surveyModel.showCompletedPage = false;
     } else {
-      this.renderSimpleForm(container, surveyJson);
-    }
+      // User mode: enable completion and navigation
+      this.surveyModel.showNavigationButtons = true;
+      this.surveyModel.showCompletedPage = false; // We handle completion ourselves
 
-    // Initialize visibility manager for conditional logic
-    this.visibilityManager = new VisibilityManager(surveyJson, container);
-    this.visibilityManager.setupFormWatching(container);
-    this.visibilityManager.initializeVisibility();
-  }
+      // Set up completion handler
+      this.surveyModel.onComplete.add((sender) => {
+        const data = sender.data;
+        console.log('Survey completed with data:', data);
 
-  /**
-   * Render survey in preview mode (read-only, no submission)
-   */
-  private renderPreviewForm(container: HTMLElement, survey: SurveyDefinition): void {
-    const formHtml = this.generateFormHtml(survey, true);
-    
-    container.innerHTML = `
-      <div class="bg-white">
-        <div class="px-6 py-4 border-b border-gray-200">
-          <h2 class="text-lg font-medium text-gray-900">${survey.title || 'Survey Preview'}</h2>
-          ${survey.description ? `<p class="mt-1 text-sm text-gray-600">${survey.description}</p>` : ''}
-        </div>
-        <div class="p-6 space-y-6">
-          ${formHtml}
-        </div>
-        <div class="px-6 py-4 bg-gray-50 border-t border-gray-200">
-          <p class="text-sm text-gray-600">
-            <strong>Preview Mode:</strong> This is a read-only preview of how the survey will appear to users.
-          </p>
-        </div>
-      </div>
-    `;
-  }
-
-  /**
-   * Simple form renderer for Phase 1 (before full Survey.js integration)
-   */
-  private renderSimpleForm(container: HTMLElement, survey: SurveyDefinition): void {
-    const formHtml = this.generateFormHtml(survey);
-    
-    container.innerHTML = `
-      <div class="bg-white shadow rounded-lg">
-        <div class="px-6 py-4 border-b border-gray-200">
-          <h2 class="text-lg font-medium text-gray-900">${survey.title || 'Survey'}</h2>
-          ${survey.description ? `<p class="mt-1 text-sm text-gray-600">${survey.description}</p>` : ''}
-        </div>
-        <form id="survey-form" class="p-6 space-y-6">
-          ${formHtml}
-          <div class="flex justify-end space-x-3">
-            <button type="button" id="save-draft-btn" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md text-sm font-medium">
-              Save Draft
-            </button>
-            <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium">
-              Complete Survey
-            </button>
-          </div>
-        </form>
-      </div>
-      <div class="mt-4 p-4 bg-blue-50 rounded-lg">
-        <p class="text-sm text-blue-700">
-          <strong>Phase 1 Preview:</strong> This is a simple form renderer. 
-          Full Survey.js integration with conditional logic and advanced features will be available in Phase 2.
-        </p>
-      </div>
-    `;
-
-    this.setupFormHandlers();
-  }
-
-  /**
-   * Generate HTML for form fields based on survey definition
-   * @param survey - Survey definition
-   * @param isPreview - Whether this is a preview (read-only) rendering
-   */
-  private generateFormHtml(survey: SurveyDefinition, isPreview: boolean = false): string {
-    let html = '';
-    
-    survey.pages?.forEach((page, pageIndex) => {
-      html += `<div class="survey-page" data-page="${pageIndex}">`;
-      
-      if (survey.pages!.length > 1) {
-        html += `<h3 class="text-md font-medium text-gray-900 mb-4">Page ${pageIndex + 1}</h3>`;
-      }
-      
-      page.elements?.forEach((element: SurveyElement) => {
-        html += this.renderFormElement(element, isPreview);
-      });
-      
-      html += `</div>`;
-    });
-    
-    return html;
-  }
-
-  /**
-   * Render individual form elements
-   * @param element - Survey element to render
-   * @param isPreview - Whether this is a preview (read-only) rendering
-   */
-  private renderFormElement(element: SurveyElement, isPreview: boolean = false): string {
-    const isRequired = element.isRequired && !isPreview ? 'required' : '';
-    const requiredMark = element.isRequired ? '<span class="text-red-500">*</span>' : '';
-    const disabledAttr = isPreview ? 'disabled' : '';
-    const disabledClass = isPreview ? 'bg-gray-50 cursor-not-allowed' : '';
-    
-    switch (element.type) {
-      case 'text':
-        return `
-          <div class="form-group">
-            <label class="block text-sm font-medium text-gray-700 mb-2">
-              ${element.title || element.name} ${requiredMark}
-            </label>
-            <input 
-              type="text" 
-              name="${element.name}" 
-              id="${element.name}"
-              class="block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${disabledClass}"
-              ${isRequired}
-              ${disabledAttr}
-              placeholder="${element.placeholder || ''}"
-            />
-          </div>
-        `;
-        
-      case 'comment':
-        return `
-          <div class="form-group">
-            <label class="block text-sm font-medium text-gray-700 mb-2">
-              ${element.title || element.name} ${requiredMark}
-            </label>
-            <textarea 
-              name="${element.name}" 
-              id="${element.name}"
-              rows="3"
-              class="block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${disabledClass}"
-              ${isRequired}
-              ${disabledAttr}
-              placeholder="${element.placeholder || ''}"
-            ></textarea>
-          </div>
-        `;
-        
-      case 'boolean':
-        return `
-          <div class="form-group">
-            <label class="flex items-center">
-              <input 
-                type="checkbox" 
-                name="${element.name}" 
-                id="${element.name}"
-                class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                ${isRequired}
-                ${disabledAttr}
-              />
-              <span class="ml-2 text-sm font-medium text-gray-700">
-                ${element.title || element.name} ${requiredMark}
-              </span>
-            </label>
-          </div>
-        `;
-        
-      case 'radiogroup':
-        const choices = element.choices || [];
-        return `
-          <div class="form-group">
-            <label class="block text-sm font-medium text-gray-700 mb-2">
-              ${element.title || element.name} ${requiredMark}
-            </label>
-            <div class="space-y-2">
-              ${choices.map((choice) => {
-                const value = typeof choice === 'string' ? choice : choice.value;
-                const text = typeof choice === 'string' ? choice : choice.text;
-                return `
-                <label class="flex items-center">
-                  <input 
-                    type="radio" 
-                    name="${element.name}" 
-                    value="${value}"
-                    class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
-                    ${isRequired}
-                    ${disabledAttr}
-                  />
-                  <span class="ml-2 text-sm text-gray-700">${text}</span>
-                </label>
-              `;
-              }).join('')}
-            </div>
-          </div>
-        `;
-        
-      case 'checkbox':
-        const checkboxChoices = element.choices || [];
-        return `
-          <div class="form-group">
-            <label class="block text-sm font-medium text-gray-700 mb-2">
-              ${element.title || element.name} ${requiredMark}
-            </label>
-            <div class="space-y-2">
-              ${checkboxChoices.map((choice) => {
-                const value = typeof choice === 'string' ? choice : choice.value;
-                const text = typeof choice === 'string' ? choice : choice.text;
-                return `
-                <label class="flex items-center">
-                  <input 
-                    type="checkbox" 
-                    name="${element.name}" 
-                    value="${value}"
-                    class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                    ${disabledAttr}
-                  />
-                  <span class="ml-2 text-sm text-gray-700">${text}</span>
-                </label>
-              `;
-              }).join('')}
-            </div>
-          </div>
-        `;
-        
-      case 'dropdown':
-        const dropdownChoices = element.choices || [];
-        return `
-          <div class="form-group">
-            <label class="block text-sm font-medium text-gray-700 mb-2">
-              ${element.title || element.name} ${requiredMark}
-            </label>
-            <select 
-              name="${element.name}" 
-              id="${element.name}"
-              class="block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${disabledClass}"
-              ${isRequired}
-              ${disabledAttr}
-            >
-              <option value="">Select an option...</option>
-              ${dropdownChoices.map((choice) => {
-                const value = typeof choice === 'string' ? choice : choice.value;
-                const text = typeof choice === 'string' ? choice : choice.text;
-                return `<option value="${value}">${text}</option>`;
-              }).join('')}
-            </select>
-          </div>
-        `;
-        
-      case 'html':
-        return `
-          <div class="form-group">
-            <div class="text-sm text-gray-700">
-              ${element.html || ''}
-            </div>
-          </div>
-        `;
-        
-      default:
-        return `
-          <div class="form-group">
-            <label class="block text-sm font-medium text-gray-700 mb-2">
-              ${element.title || element.name} ${requiredMark}
-            </label>
-            <input 
-              type="text" 
-              name="${element.name}" 
-              id="${element.name}"
-              class="block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${disabledClass}"
-              placeholder="Unsupported field type: ${element.type}"
-              ${isRequired}
-              ${disabledAttr}
-            />
-          </div>
-        `;
-    }
-  }
-
-  /**
-   * Set up form event handlers
-   */
-  private setupFormHandlers(): void {
-    const form = this.container?.querySelector('#survey-form') as HTMLFormElement;
-    const saveDraftBtn = this.container?.querySelector('#save-draft-btn');
-    
-    if (form) {
-      form.addEventListener('submit', (e) => {
-        e.preventDefault();
-        this.handleFormSubmit(form);
-      });
-    }
-    
-    if (saveDraftBtn) {
-      saveDraftBtn.addEventListener('click', () => {
-        this.saveDraft(form);
-      });
-    }
-  }
-
-  /**
-   * Handle form submission
-   */
-  private handleFormSubmit(form: HTMLFormElement): void {
-    const formData = new FormData(form);
-    const data: Record<string, any> = {};
-    
-    // Convert FormData to object
-    for (const [key, value] of formData.entries()) {
-      if (data[key]) {
-        // Handle multiple values (checkboxes)
-        if (Array.isArray(data[key])) {
-          data[key].push(value);
+        if (this.onCompleteCallback) {
+          this.onCompleteCallback(data);
         } else {
-          data[key] = [data[key], value];
+          this.showCompletionMessage(data);
         }
-      } else {
-        data[key] = value;
-      }
+      });
     }
-    
-    console.log('Survey completed with data:', data);
-    
-    // Call completion callback if provided (Phase 2)
-    if (this.onCompleteCallback) {
-      this.onCompleteCallback(data);
-    } else {
-      // For Phase 1, just show a success message
-      this.showCompletionMessage(data);
-    }
+
+    // Render the survey using Survey.js UI
+    renderSurvey(this.surveyModel, container);
   }
 
   /**
-   * Save draft functionality
+   * Show completion message (used when no completion callback is provided)
    */
-  private saveDraft(form: HTMLFormElement): void {
-    const formData = new FormData(form);
-    const data: Record<string, any> = {};
-    
-    for (const [key, value] of formData.entries()) {
-      data[key] = value;
-    }
-    
-    // Save to localStorage
-    const draftKey = `docassembly_draft_${Date.now()}`;
-    localStorage.setItem(draftKey, JSON.stringify({
-      surveyData: data,
-      lastSaved: new Date().toISOString(),
-      packageId: 'sample-package'
-    }));
-    
-    // Show confirmation
-    this.showDraftSavedMessage();
-  }
-
-  /**
-   * Show completion message
-   */
-  private showCompletionMessage(data: Record<string, any>): void {
+  private showCompletionMessage(data: Record<string, unknown>): void {
     if (this.container) {
       this.container.innerHTML = `
         <div class="bg-white shadow rounded-lg p-6">
@@ -395,12 +90,20 @@ export class SurveyRuntimeService {
             <div class="mt-6 bg-gray-50 rounded-lg p-4">
               <h4 class="text-sm font-medium text-gray-900 mb-2">Your Responses:</h4>
               <div class="text-left space-y-1">
-                ${Object.entries(data).map(([key, value]) => `
+                ${Object.entries(data)
+                  .map(([key, value]) => {
+                    const safeKey = escapeHtml(key);
+                    const safeValue = escapeHtml(
+                      Array.isArray(value) ? value.join(', ') : String(value)
+                    );
+                    return `
                   <div class="text-sm">
-                    <span class="font-medium text-gray-700">${key}:</span> 
-                    <span class="text-gray-600">${Array.isArray(value) ? value.join(', ') : value}</span>
+                    <span class="font-medium text-gray-700">${safeKey}:</span> 
+                    <span class="text-gray-600">${safeValue}</span>
                   </div>
-                `).join('')}
+                `;
+                  })
+                  .join('')}
               </div>
             </div>
             
@@ -416,77 +119,31 @@ export class SurveyRuntimeService {
   }
 
   /**
-   * Show draft saved message
+   * Get current survey data from the Survey.js model
    */
-  private showDraftSavedMessage(): void {
-    // Create a temporary notification
-    const notification = document.createElement('div');
-    notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-md shadow-lg z-50';
-    notification.textContent = 'Draft saved!';
-    document.body.appendChild(notification);
-    
-    setTimeout(() => {
-      document.body.removeChild(notification);
-    }, 3000);
+  getCurrentData(): Record<string, unknown> {
+    if (!this.surveyModel) return {};
+    return this.surveyModel.data;
   }
 
   /**
-   * Get current survey data
+   * Load data into the survey
    */
-  getCurrentData(): Record<string, any> {
-    const form = this.container?.querySelector('#survey-form') as HTMLFormElement;
-    if (!form) return {};
-    
-    const formData = new FormData(form);
-    const data: Record<string, any> = {};
-    
-    for (const [key, value] of formData.entries()) {
-      data[key] = value;
+  loadData(data: Record<string, unknown>): void {
+    if (this.surveyModel) {
+      this.surveyModel.data = data;
     }
-    
-    return data;
   }
 
   /**
-   * Load data into the form
-   */
-  loadData(data: Record<string, any>): void {
-    Object.entries(data).forEach(([key, value]) => {
-      const fields = this.container?.querySelectorAll(`[name="${key}"]`) as NodeListOf<HTMLInputElement>;
-      
-      if (fields.length === 0) return;
-      
-      // Handle checkbox groups (multiple fields with same name)
-      if (fields.length > 1 && fields[0].type === 'checkbox') {
-        const values = Array.isArray(value) ? value : [value];
-        fields.forEach(field => {
-          field.checked = values.includes(field.value);
-        });
-      }
-      // Handle radio groups
-      else if (fields.length > 1 && fields[0].type === 'radio') {
-        fields.forEach(field => {
-          field.checked = field.value === value;
-        });
-      }
-      // Handle single field (text, select, etc.)
-      else if (fields.length === 1) {
-        const field = fields[0];
-        if (field.type === 'checkbox') {
-          field.checked = !!value;
-        } else {
-          field.value = value as string;
-        }
-      }
-    });
-  }
-
-  /**
-   * Cleanup
+   * Cleanup resources
    */
   dispose(): void {
+    if (this.surveyModel) {
+      this.surveyModel.dispose();
+      this.surveyModel = null;
+    }
     this.container = null;
     this.onCompleteCallback = null;
-    this.visibilityManager = null;
   }
 }

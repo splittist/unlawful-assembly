@@ -6,6 +6,15 @@ import { renderSurvey } from 'survey-js-ui';
 import 'survey-core/defaultV2.min.css';
 
 /**
+ * Escape HTML special characters to prevent XSS attacks
+ */
+function escapeHtml(text: string): string {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+/**
  * Survey.js Runtime integration service
  * Handles survey rendering and data collection for users and preview mode
  * Uses full Survey.js integration for form rendering with all features
@@ -82,14 +91,18 @@ export class SurveyRuntimeService {
               <h4 class="text-sm font-medium text-gray-900 mb-2">Your Responses:</h4>
               <div class="text-left space-y-1">
                 ${Object.entries(data)
-                  .map(
-                    ([key, value]) => `
+                  .map(([key, value]) => {
+                    const safeKey = escapeHtml(key);
+                    const safeValue = escapeHtml(
+                      Array.isArray(value) ? value.join(', ') : String(value)
+                    );
+                    return `
                   <div class="text-sm">
-                    <span class="font-medium text-gray-700">${key}:</span> 
-                    <span class="text-gray-600">${Array.isArray(value) ? value.join(', ') : String(value)}</span>
+                    <span class="font-medium text-gray-700">${safeKey}:</span> 
+                    <span class="text-gray-600">${safeValue}</span>
                   </div>
-                `
-                  )
+                `;
+                  })
                   .join('')}
               </div>
             </div>

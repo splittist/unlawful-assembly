@@ -403,16 +403,46 @@ ${'{{'}/job_duties${'}}'}</pre>
 
   private setupCollapsibleSections(container: HTMLElement): void {
     container.querySelectorAll('.collapsible-header').forEach(header => {
-      header.addEventListener('click', () => {
-        const targetId = header.getAttribute('data-target');
-        if (!targetId) return;
-        
-        const content = container.querySelector(`#${targetId}`);
+      const targetId = header.getAttribute('data-target');
+      if (!targetId) {
+        console.warn('Collapsible header missing data-target attribute:', header);
+        return;
+      }
+      
+      const content = container.querySelector(`#${targetId}`);
+      if (!content) {
+        console.warn('Collapsible content not found for target:', targetId);
+        return;
+      }
+      
+      // Set up ARIA attributes for accessibility
+      header.setAttribute('aria-expanded', 'false');
+      header.setAttribute('aria-controls', targetId);
+      content.setAttribute('aria-hidden', 'true');
+      
+      const toggleCollapsible = () => {
+        const isExpanded = header.getAttribute('aria-expanded') === 'true';
         const icon = header.querySelector('.collapsible-icon');
         
-        if (content && icon) {
-          content.classList.toggle('hidden');
+        // Toggle state
+        header.setAttribute('aria-expanded', String(!isExpanded));
+        content.setAttribute('aria-hidden', String(isExpanded));
+        content.classList.toggle('hidden');
+        
+        if (icon) {
           icon.classList.toggle('rotate-180');
+        }
+      };
+      
+      // Handle click events
+      header.addEventListener('click', toggleCollapsible);
+      
+      // Handle keyboard events for accessibility (Enter and Space)
+      header.addEventListener('keydown', (e) => {
+        const keyboardEvent = e as KeyboardEvent;
+        if (keyboardEvent.key === 'Enter' || keyboardEvent.key === ' ') {
+          e.preventDefault();
+          toggleCollapsible();
         }
       });
     });

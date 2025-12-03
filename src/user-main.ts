@@ -281,7 +281,7 @@ class UserApp {
   }
 
   private async handleSurveyComplete(surveyData: any, packageContent: PackageContent): Promise<void> {
-    console.log('Survey completed, generating document...', { surveyData, packageContent: packageContent.metadata.title });
+    console.log('Survey completed, generating document(s)...', { surveyData, packageContent: packageContent.metadata.title });
     
     const mainContent = this.container.querySelector('#main-content')!;
     
@@ -289,11 +289,31 @@ class UserApp {
       // Show loading state
       DomUtils.setLoadingState(mainContent as HTMLElement, {
         isLoading: true,
-        message: 'Generating document...'
+        message: 'Generating document(s)...'
       });
 
-      // Check if package has template and mappings
-      if (!packageContent.template) {
+      // Check for multiple templates first
+      const hasMultipleTemplates = packageContent.templates && packageContent.templates.length > 0;
+      const hasLegacyTemplate = !!packageContent.template;
+
+      if (hasMultipleTemplates) {
+        // Check for template mappings
+        const hasMappings = packageContent.templateMappings && packageContent.templateMappings.length > 0;
+        if (!hasMappings) {
+          this.showMappingRequiredMessage();
+          return;
+        }
+
+        // Generate all documents from multiple templates
+        const results = await DocumentGeneratorService.generateAllDocuments(surveyData, packageContent);
+        
+        // Show success message with count
+        this.showMultiDocumentGeneratedMessage(packageContent.metadata.title, results.length);
+        return;
+      }
+
+      // Legacy single template handling
+      if (!hasLegacyTemplate) {
         this.showDocumentGenerationUI(surveyData);
         return;
       }
@@ -445,6 +465,52 @@ class UserApp {
             </button>
             <div class="text-sm text-gray-500">
               <p>Check your Downloads folder for the generated document</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  private showMultiDocumentGeneratedMessage(packageTitle: string, documentCount: number): void {
+    const mainContent = this.container.querySelector('#main-content')!;
+    
+    mainContent.innerHTML = `
+      <div class="bg-white shadow rounded-lg p-8">
+        <div class="text-center">
+          <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 mb-4">
+            <svg class="h-6 w-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+            </svg>
+          </div>
+          <h2 class="text-2xl font-bold text-green-900 mb-4">${documentCount} Documents Generated Successfully!</h2>
+          <p class="text-gray-600 mb-6">Your documents have been created and downloaded automatically.</p>
+          
+          <div class="bg-green-50 border border-green-200 rounded-md p-4 mb-6">
+            <div class="flex">
+              <div class="flex-shrink-0">
+                <svg class="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                </svg>
+              </div>
+              <div class="ml-3 text-left">
+                <h3 class="text-sm font-medium text-green-800">Generation Details</h3>
+                <div class="mt-2 text-sm text-green-700">
+                  <p><strong>Package:</strong> ${packageTitle}</p>
+                  <p><strong>Documents generated:</strong> ${documentCount}</p>
+                  <p><strong>Generated:</strong> ${new Date().toLocaleString()}</p>
+                  <p><strong>Status:</strong> Downloads should have started automatically</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="space-y-4">
+            <button onclick="location.reload()" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg transition-colors">
+              Generate More Documents
+            </button>
+            <div class="text-sm text-gray-500">
+              <p>Check your Downloads folder for all generated documents</p>
             </div>
           </div>
         </div>

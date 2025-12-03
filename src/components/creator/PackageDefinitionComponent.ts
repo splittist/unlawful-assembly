@@ -368,7 +368,11 @@ List any requirements..."></textarea>
   private updateTemplateContent(container: HTMLElement): void {
     const templateContent = container.querySelector('#template-content')!;
     
-    if (!this.currentPackage?.template) {
+    // Check for multiple templates first
+    const hasMultipleTemplates = this.currentPackage?.templates && this.currentPackage.templates.length > 0;
+    const hasLegacyTemplate = !!this.currentPackage?.template;
+    
+    if (!hasMultipleTemplates && !hasLegacyTemplate) {
       templateContent.innerHTML = `
         <p class="text-sm text-gray-500 mb-2">No template loaded</p>
         <button class="text-xs text-purple-600 hover:underline">Import from Template Manager →</button>
@@ -376,26 +380,51 @@ List any requirements..."></textarea>
       return;
     }
 
-    const sizeKB = Math.round(this.currentPackage.template.content.byteLength / 1024);
-    
-    templateContent.innerHTML = `
-      <div class="space-y-2">
-        <div class="text-sm font-medium text-gray-900">${this.currentPackage.template.filename}</div>
-        <div class="text-xs text-gray-600">
-          <div>${sizeKB} KB</div>
-          <div>${this.currentPackage.template.placeholders.length} placeholders</div>
+    if (hasMultipleTemplates) {
+      const templates = this.currentPackage!.templates;
+      const totalSize = templates.reduce((size, t) => size + (t.content?.byteLength || 0), 0);
+      const totalPlaceholders = templates.reduce((count, t) => count + (t.placeholders?.length || 0), 0);
+      const sizeKB = Math.round(totalSize / 1024);
+      
+      templateContent.innerHTML = `
+        <div class="space-y-2">
+          <div class="text-sm font-medium text-gray-900">${templates.length} templates</div>
+          <div class="text-xs text-gray-600">
+            <div>${sizeKB} KB total</div>
+            <div>${totalPlaceholders} placeholders</div>
+          </div>
+          <div class="text-xs text-purple-600 space-y-1">
+            ${templates.slice(0, 3).map(t => `<div>• ${t.filename}</div>`).join('')}
+            ${templates.length > 3 ? `<div class="text-gray-500">...and ${templates.length - 3} more</div>` : ''}
+          </div>
         </div>
-        <div class="text-xs text-purple-600">
-          <button class="hover:underline">Analyze Template →</button>
+      `;
+    } else {
+      const sizeKB = Math.round(this.currentPackage!.template!.content.byteLength / 1024);
+      
+      templateContent.innerHTML = `
+        <div class="space-y-2">
+          <div class="text-sm font-medium text-gray-900">${this.currentPackage!.template!.filename}</div>
+          <div class="text-xs text-gray-600">
+            <div>${sizeKB} KB</div>
+            <div>${this.currentPackage!.template!.placeholders.length} placeholders</div>
+          </div>
+          <div class="text-xs text-purple-600">
+            <button class="hover:underline">Analyze Template →</button>
+          </div>
         </div>
-      </div>
-    `;
+      `;
+    }
   }
 
   private updateMappingsContent(container: HTMLElement): void {
     const mappingsContent = container.querySelector('#mappings-content')!;
     
-    if (!this.currentPackage?.mappings || this.currentPackage.mappings.length === 0) {
+    // Check for multi-template mappings first
+    const hasTemplateMappings = this.currentPackage?.templateMappings && this.currentPackage.templateMappings.length > 0;
+    const hasLegacyMappings = this.currentPackage?.mappings && this.currentPackage.mappings.length > 0;
+    
+    if (!hasTemplateMappings && !hasLegacyMappings) {
       mappingsContent.innerHTML = `
         <p class="text-sm text-gray-500 mb-2">No mappings loaded</p>
         <button class="text-xs text-yellow-600 hover:underline">Import from Mapping Interface →</button>
@@ -403,17 +432,36 @@ List any requirements..."></textarea>
       return;
     }
 
-    mappingsContent.innerHTML = `
-      <div class="space-y-2">
-        <div class="text-sm font-medium text-gray-900">${this.currentPackage.mappings.length} mappings</div>
-        <div class="text-xs text-gray-600">
-          ${this.currentPackage.mappings.filter(m => m.isRequired).length} required
+    if (hasTemplateMappings) {
+      const totalMappings = this.currentPackage!.templateMappings.reduce(
+        (count, tm) => count + (tm.mappings?.length || 0), 0
+      );
+      const templateCount = this.currentPackage!.templateMappings.length;
+      
+      mappingsContent.innerHTML = `
+        <div class="space-y-2">
+          <div class="text-sm font-medium text-gray-900">${totalMappings} mappings</div>
+          <div class="text-xs text-gray-600">
+            Across ${templateCount} template(s)
+          </div>
+          <div class="text-xs text-yellow-600">
+            <button class="hover:underline">View Mappings →</button>
+          </div>
         </div>
-        <div class="text-xs text-yellow-600">
-          <button class="hover:underline">View Mappings →</button>
+      `;
+    } else {
+      mappingsContent.innerHTML = `
+        <div class="space-y-2">
+          <div class="text-sm font-medium text-gray-900">${this.currentPackage!.mappings.length} mappings</div>
+          <div class="text-xs text-gray-600">
+            ${this.currentPackage!.mappings.filter(m => m.isRequired).length} required
+          </div>
+          <div class="text-xs text-yellow-600">
+            <button class="hover:underline">View Mappings →</button>
+          </div>
         </div>
-      </div>
-    `;
+      `;
+    }
   }
 
   private updatePackageStats(container: HTMLElement): void {
@@ -427,6 +475,10 @@ List any requirements..."></textarea>
         <div class="flex justify-between">
           <span class="text-sm text-gray-600">Survey Questions</span>
           <span class="text-sm font-medium">${stats.surveyQuestions}</span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-sm text-gray-600">Templates</span>
+          <span class="text-sm font-medium">${stats.templateCount}</span>
         </div>
         <div class="flex justify-between">
           <span class="text-sm text-gray-600">Template Fields</span>

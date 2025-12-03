@@ -19,17 +19,41 @@ export interface PackageMetadata {
 }
 
 /**
+ * Interface for a single template with its content and metadata
+ */
+export interface TemplateEntry {
+  id: string;
+  filename: string;
+  content: ArrayBuffer;
+  placeholders: DocxPlaceholder[];
+}
+
+/**
+ * Interface for per-template field mappings
+ */
+export interface TemplateMappings {
+  templateId: string;
+  mappings: FieldMapping[];
+}
+
+/**
  * Interface for package content
  */
 export interface PackageContent {
   metadata: PackageMetadata;
   survey: SurveyDefinition;
+  /** @deprecated Use templates array instead. Kept for backward compatibility. */
   template?: {
     filename: string;
     content: ArrayBuffer;
     placeholders: DocxPlaceholder[];
   };
+  /** Array of templates in the package */
+  templates: TemplateEntry[];
+  /** @deprecated Use templateMappings array instead. Kept for backward compatibility. */
   mappings: FieldMapping[];
+  /** Per-template mappings */
+  templateMappings: TemplateMappings[];
   readme?: string;
 }
 
@@ -75,7 +99,9 @@ export class PackageService {
           elements: []
         }]
       },
+      templates: [],
       mappings: [],
+      templateMappings: [],
       readme: this.generateDefaultReadme()
     };
   }
@@ -114,31 +140,81 @@ export class PackageService {
       errors.push('Survey must have at least one question');
     }
 
-    // Validate template (if provided)
-    if (packageContent.template) {
-      if (!packageContent.template.filename?.endsWith('.docx')) {
+    // Validate templates (new multi-template support)
+    const hasTemplates = packageContent.templates && packageContent.templates.length > 0;
+    const hasLegacyTemplate = !!packageContent.template;
+
+    if (hasTemplates) {
+      for (const template of packageContent.templates) {
+        if (!template.filename?.endsWith('.docx')) {
+          errors.push(`Template "${template.id}" file must be a .docx format`);
+        }
+
+        if (!template.content || template.content.byteLength === 0) {
+          errors.push(`Template "${template.id}" file content is missing or empty`);
+        }
+
+        if (template.placeholders.length === 0) {
+          warnings.push(`Template "${template.filename}" contains no placeholders - document generation may not work as expected`);
+        }
+      }
+    } else if (hasLegacyTemplate) {
+      // Legacy single template validation
+      if (!packageContent.template!.filename?.endsWith('.docx')) {
         errors.push('Template file must be a .docx format');
       }
 
-      if (!packageContent.template.content || packageContent.template.content.byteLength === 0) {
+      if (!packageContent.template!.content || packageContent.template!.content.byteLength === 0) {
         errors.push('Template file content is missing or empty');
       }
 
-      if (packageContent.template.placeholders.length === 0) {
+      if (packageContent.template!.placeholders.length === 0) {
         warnings.push('Template contains no placeholders - document generation may not work as expected');
       }
     } else {
       warnings.push('No template file included - package will only contain survey');
     }
 
-    // Validate mappings (if template exists)
-    if (packageContent.template && packageContent.mappings.length === 0) {
+    // Validate mappings
+    const hasTemplateMappings = packageContent.templateMappings && packageContent.templateMappings.length > 0;
+    const hasLegacyMappings = packageContent.mappings && packageContent.mappings.length > 0;
+
+    if (hasTemplates) {
+      // Validate per-template mappings
+      for (const template of packageContent.templates) {
+        const templateMapping = packageContent.templateMappings?.find(tm => tm.templateId === template.id);
+        if (!templateMapping || templateMapping.mappings.length === 0) {
+          warnings.push(`No field mappings defined for template "${template.filename}" - documents cannot be generated without mappings`);
+        }
+      }
+    } else if (hasLegacyTemplate && !hasLegacyMappings) {
       warnings.push('No field mappings defined - documents cannot be generated without mappings');
     }
 
     // Check mapping completeness
     let completeness = 0;
-    if (packageContent.template) {
+    if (hasTemplates && hasTemplateMappings) {
+      let totalRequired = 0;
+      let totalMapped = 0;
+
+      for (const template of packageContent.templates) {
+        const templateMapping = packageContent.templateMappings.find(tm => tm.templateId === template.id);
+        const requiredPlaceholders = template.placeholders.filter(p => p.isRequired || p.type === 'simple');
+        const mappedPlaceholders = templateMapping?.mappings.map(m => m.placeholder) || [];
+        const mappedRequiredCount = requiredPlaceholders.filter(p => mappedPlaceholders.includes(p.name)).length;
+        
+        totalRequired += requiredPlaceholders.length;
+        totalMapped += mappedRequiredCount;
+      }
+
+      if (totalRequired > 0) {
+        completeness = (totalMapped / totalRequired) * 100;
+        if (completeness < 100) {
+          warnings.push(`Only ${Math.round(completeness)}% of required placeholders are mapped across all templates`);
+        }
+      }
+    } else if (hasLegacyTemplate && packageContent.template) {
+      // Legacy completeness calculation
       const requiredPlaceholders = packageContent.template.placeholders.filter(p => p.isRequired || p.type === 'simple');
       const mappedPlaceholders = packageContent.mappings.map(m => m.placeholder);
       const mappedRequiredCount = requiredPlaceholders.filter(p => mappedPlaceholders.includes(p.name)).length;
@@ -193,6 +269,7 @@ export class PackageService {
       const zip = new PizZip();
 
       // Add package metadata
+      const hasMultipleTemplates = packageContent.templates && packageContent.templates.length > 0;
       zip.file('package.json', JSON.stringify({
         name: packageContent.metadata.id,
         title: packageContent.metadata.title,
@@ -203,13 +280,38 @@ export class PackageService {
         modified: new Date().toISOString(),
         tags: packageContent.metadata.tags,
         type: 'document-assembly-package',
-        generator: 'Document Assembly Creator v2.0'
+        generator: 'Document Assembly Creator v2.0',
+        multiTemplate: hasMultipleTemplates
       }, null, 2));
 
       // Add survey definition
       zip.file('survey.json', JSON.stringify(packageContent.survey, null, 2));
 
-      // Add template file (if provided)
+      // Add multiple templates (new format)
+      if (hasMultipleTemplates) {
+        for (const template of packageContent.templates) {
+          zip.file(`templates/${template.id}/${template.filename}`, template.content);
+          
+          // Add template analysis per template
+          zip.file(`templates/${template.id}/analysis.json`, JSON.stringify({
+            id: template.id,
+            filename: template.filename,
+            placeholders: template.placeholders,
+            analyzedAt: new Date().toISOString()
+          }, null, 2));
+        }
+
+        // Add per-template mappings
+        if (packageContent.templateMappings && packageContent.templateMappings.length > 0) {
+          zip.file('template-mappings.json', JSON.stringify({
+            version: '2.0',
+            createdAt: new Date().toISOString(),
+            templateMappings: packageContent.templateMappings
+          }, null, 2));
+        }
+      }
+
+      // Add legacy template file (for backward compatibility)
       if (packageContent.template) {
         zip.file(`template/${packageContent.template.filename}`, packageContent.template.content);
         
@@ -221,7 +323,7 @@ export class PackageService {
         }, null, 2));
       }
 
-      // Add field mappings
+      // Add legacy field mappings (for backward compatibility)
       zip.file('mappings.json', JSON.stringify({
         version: '1.0',
         createdAt: new Date().toISOString(),
@@ -295,11 +397,41 @@ export class PackageService {
 
       const survey = JSON.parse(surveyFile.asText());
 
-      // Extract template (if exists)
+      // Extract multiple templates (new format)
+      const templates: TemplateEntry[] = [];
+      const templatesFolder = zip.file(/^templates\//);
+      if (templatesFolder.length > 0) {
+        // Get unique template IDs from folder structure
+        const templateIds = new Set<string>();
+        for (const file of templatesFolder) {
+          const match = file.name.match(/^templates\/([^/]+)\//);
+          if (match) {
+            templateIds.add(match[1]);
+          }
+        }
+
+        for (const templateId of templateIds) {
+          const templateDir = `templates/${templateId}/`;
+          const docxFiles = zip.file(new RegExp(`^${templateDir}.*\\.docx$`));
+          const analysisFile = zip.file(`${templateDir}analysis.json`);
+          
+          if (docxFiles.length > 0 && analysisFile) {
+            const analysis = JSON.parse(analysisFile.asText());
+            templates.push({
+              id: analysis.id || templateId,
+              filename: analysis.filename,
+              content: docxFiles[0].asArrayBuffer(),
+              placeholders: analysis.placeholders || []
+            });
+          }
+        }
+      }
+
+      // Extract legacy template (if exists) for backward compatibility
       let template;
-      const templateFiles = zip.file(/^template\//);
-      if (templateFiles.length > 0) {
-        const docxFile = templateFiles.find(f => f.name.endsWith('.docx'));
+      const legacyTemplateFiles = zip.file(/^template\//);
+      if (legacyTemplateFiles.length > 0) {
+        const docxFile = legacyTemplateFiles.find(f => f.name.endsWith('.docx'));
         const analysisFile = zip.file('template/analysis.json');
         
         if (docxFile && analysisFile) {
@@ -312,8 +444,16 @@ export class PackageService {
         }
       }
 
-      // Extract mappings
-      let mappings = [];
+      // Extract per-template mappings (new format)
+      let templateMappings: TemplateMappings[] = [];
+      const templateMappingsFile = zip.file('template-mappings.json');
+      if (templateMappingsFile) {
+        const mappingsData = JSON.parse(templateMappingsFile.asText());
+        templateMappings = mappingsData.templateMappings || [];
+      }
+
+      // Extract legacy mappings
+      let mappings: FieldMapping[] = [];
       const mappingsFile = zip.file('mappings.json');
       if (mappingsFile) {
         const mappingsData = JSON.parse(mappingsFile.asText());
@@ -340,7 +480,9 @@ export class PackageService {
           tags: packageJson.tags || []
         },
         survey,
+        templates,
         template,
+        templateMappings,
         mappings,
         readme
       };
@@ -360,6 +502,7 @@ export class PackageService {
   static getPackageStats(packageContent: PackageContent): {
     surveyQuestions: number;
     templatePlaceholders: number;
+    templateCount: number;
     activeMappings: number;
     completeness: number;
     estimatedSize: string;
@@ -367,15 +510,39 @@ export class PackageService {
     const surveyQuestions = packageContent.survey.pages?.reduce((count, page) => 
       count + (page.elements?.length || 0), 0) || 0;
 
-    const templatePlaceholders = packageContent.template?.placeholders.length || 0;
-    const activeMappings = packageContent.mappings.length;
+    // Count placeholders across all templates
+    let templatePlaceholders = 0;
+    let templateCount = 0;
+    let templateSize = 0;
+
+    if (packageContent.templates && packageContent.templates.length > 0) {
+      templateCount = packageContent.templates.length;
+      templatePlaceholders = packageContent.templates.reduce(
+        (count, t) => count + (t.placeholders?.length || 0), 0
+      );
+      templateSize = packageContent.templates.reduce(
+        (size, t) => size + (t.content?.byteLength || 0), 0
+      );
+    } else if (packageContent.template) {
+      templateCount = 1;
+      templatePlaceholders = packageContent.template.placeholders?.length || 0;
+      templateSize = packageContent.template.content?.byteLength || 0;
+    }
+
+    // Count all mappings
+    let activeMappings = packageContent.mappings?.length || 0;
+    if (packageContent.templateMappings && packageContent.templateMappings.length > 0) {
+      activeMappings += packageContent.templateMappings.reduce(
+        (count, tm) => count + (tm.mappings?.length || 0), 0
+      );
+    }
     
     const validation = this.validatePackage(packageContent);
     
     // Estimate package size (rough calculation)
     const surveySize = JSON.stringify(packageContent.survey).length;
-    const mappingsSize = JSON.stringify(packageContent.mappings).length;
-    const templateSize = packageContent.template?.content.byteLength || 0;
+    const mappingsSize = JSON.stringify(packageContent.mappings || []).length +
+                        JSON.stringify(packageContent.templateMappings || []).length;
     const metadataSize = 1024; // Approximate metadata overhead
     
     const totalBytes = surveySize + mappingsSize + templateSize + metadataSize;
@@ -384,6 +551,7 @@ export class PackageService {
     return {
       surveyQuestions,
       templatePlaceholders,
+      templateCount,
       activeMappings,
       completeness: validation.completeness,
       estimatedSize

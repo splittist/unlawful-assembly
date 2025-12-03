@@ -162,18 +162,10 @@ export function createMockPackageContent() {
       title: 'Employment Contract Package',
       description: 'Test package for employment contracts',
       version: '1.0.0',
-      createdDate: '2024-01-01',
-      createdBy: 'Test User',
-      lastUpdated: '2024-01-01',
-      templates: [
-        {
-          id: 'template-1',
-          name: 'Employment Contract',
-          file: 'employment-contract.docx',
-          mapping: 'employment-mapping.json'
-        }
-      ],
-      survey: 'nda-survey.json'
+      author: 'Test User',
+      created: '2024-01-01',
+      modified: '2024-01-01',
+      tags: ['employment', 'contract']
     },
     survey: {
       title: 'Employment Information',
@@ -205,11 +197,137 @@ export function createMockPackageContent() {
         }
       ]
     },
+    // Legacy single template for backward compatibility tests
     template: {
       filename: 'employment-contract.docx',
-      content: createMockDocxBuffer('Employment contract template with {employee_name} and {company_name}')
+      content: createMockDocxBuffer('Employment contract template with {employee_name} and {company_name}'),
+      placeholders: [
+        createMockDocxPlaceholder('employee_name'),
+        createMockDocxPlaceholder('company_name'),
+        createMockDocxPlaceholder('job_title'),
+        createMockDocxPlaceholder('annual_salary')
+      ]
     },
-    mappings: createMockFieldMappings()
+    // New multi-template structure
+    templates: [],
+    mappings: createMockFieldMappings(),
+    templateMappings: []
+  };
+}
+
+/**
+ * Create mock package content with multiple templates for testing
+ */
+export function createMockMultiTemplatePackageContent() {
+  const template1Buffer = createMockDocxBuffer('Employment contract with {employee_name} at {company_name}');
+  const template2Buffer = createMockDocxBuffer('NDA agreement with {employee_name} for {company_name}');
+  
+  return {
+    metadata: {
+      id: 'test-multi-template-package',
+      title: 'Multi-Template Package',
+      description: 'Test package with multiple templates',
+      version: '1.0.0',
+      author: 'Test User',
+      created: '2024-01-01',
+      modified: '2024-01-01',
+      tags: ['multi', 'templates']
+    },
+    survey: {
+      title: 'Employee Information Survey',
+      description: 'Collect employee information for multiple documents',
+      pages: [
+        {
+          name: 'page1',
+          title: 'Basic Information',
+          elements: [
+            {
+              type: 'text',
+              name: 'employee_name',
+              title: 'Employee Name',
+              isRequired: true
+            },
+            {
+              type: 'text', 
+              name: 'company_name',
+              title: 'Company Name',
+              isRequired: true
+            },
+            {
+              type: 'text',
+              name: 'job_title', 
+              title: 'Job Title',
+              isRequired: true
+            }
+          ]
+        }
+      ]
+    },
+    templates: [
+      {
+        id: 'template-contract',
+        filename: 'employment-contract.docx',
+        content: template1Buffer,
+        placeholders: [
+          createMockDocxPlaceholder('employee_name'),
+          createMockDocxPlaceholder('company_name')
+        ]
+      },
+      {
+        id: 'template-nda',
+        filename: 'nda-agreement.docx',
+        content: template2Buffer,
+        placeholders: [
+          createMockDocxPlaceholder('employee_name'),
+          createMockDocxPlaceholder('company_name')
+        ]
+      }
+    ],
+    templateMappings: [
+      {
+        templateId: 'template-contract',
+        mappings: [
+          {
+            id: 'mapping-1',
+            surveyField: 'employee_name',
+            placeholder: 'employee_name',
+            placeholderType: 'simple' as const,
+            isRequired: true,
+            isValid: true
+          },
+          {
+            id: 'mapping-2',
+            surveyField: 'company_name',
+            placeholder: 'company_name',
+            placeholderType: 'simple' as const,
+            isRequired: true,
+            isValid: true
+          }
+        ]
+      },
+      {
+        templateId: 'template-nda',
+        mappings: [
+          {
+            id: 'mapping-3',
+            surveyField: 'employee_name',
+            placeholder: 'employee_name',
+            placeholderType: 'simple' as const,
+            isRequired: true,
+            isValid: true
+          },
+          {
+            id: 'mapping-4',
+            surveyField: 'company_name',
+            placeholder: 'company_name',
+            placeholderType: 'simple' as const,
+            isRequired: true,
+            isValid: true
+          }
+        ]
+      }
+    ],
+    mappings: [] // Empty for multi-template packages
   };
 }
 

@@ -1,8 +1,17 @@
 import Docxtemplater from 'docxtemplater';
 import PizZip from 'pizzip';
 import { saveAs } from 'file-saver';
-import type { PackageContent } from './packageService';
+import type { PackageContent, TemplateEntry } from './packageService';
 import type { FieldMapping } from './fieldMapping';
+
+/**
+ * Result of generating a single document
+ */
+export interface GeneratedDocument {
+  templateId: string;
+  filename: string;
+  buffer: ArrayBuffer;
+}
 
 /**
  * Document Generation Service
@@ -12,6 +21,7 @@ import type { FieldMapping } from './fieldMapping';
 export class DocumentGeneratorService {
   /**
    * Generate document from survey responses and package content
+   * For backward compatibility, generates a single document using legacy template/mappings
    */
   static async generateDocument(
     surveyResponses: Record<string, any>,
@@ -30,6 +40,16 @@ export class DocumentGeneratorService {
         throw new Error('Survey responses are required for document generation');
       }
 
+      // Check for multi-template support first
+      const hasMultipleTemplates = packageContent.templates && packageContent.templates.length > 0;
+      
+      if (hasMultipleTemplates) {
+        // Use the new multi-template generation
+        await this.generateAllDocuments(surveyResponses, packageContent);
+        return;
+      }
+
+      // Legacy single template handling
       if (!packageContent.template) {
         throw new Error('Package must contain a template for document generation');
       }
@@ -66,6 +86,126 @@ export class DocumentGeneratorService {
       console.error('Error generating document:', error);
       throw new Error(`Failed to generate document: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
+  }
+
+  /**
+   * Generate all documents from multiple templates in a package
+   * Each template is processed with its corresponding mappings
+   */
+  static async generateAllDocuments(
+    surveyResponses: Record<string, any>,
+    packageContent: PackageContent
+  ): Promise<GeneratedDocument[]> {
+    const results: GeneratedDocument[] = [];
+
+    // Validate inputs
+    if (!surveyResponses || Object.keys(surveyResponses).length === 0) {
+      throw new Error('Survey responses are required for document generation');
+    }
+
+    if (!packageContent.templates || packageContent.templates.length === 0) {
+      throw new Error('Package must contain at least one template for document generation');
+    }
+
+    console.log(`Generating ${packageContent.templates.length} document(s)...`);
+
+    for (const template of packageContent.templates) {
+      try {
+        // Find mappings for this template
+        const templateMapping = packageContent.templateMappings?.find(
+          tm => tm.templateId === template.id
+        );
+
+        if (!templateMapping || templateMapping.mappings.length === 0) {
+          console.warn(`No mappings found for template "${template.filename}", skipping...`);
+          continue;
+        }
+
+        // Transform survey responses using template-specific mappings
+        const templateData = this.transformResponsesToTemplateData(
+          surveyResponses,
+          templateMapping.mappings
+        );
+
+        console.log(`Processing template "${template.filename}"...`);
+
+        // Generate document using docxtemplater
+        const generatedDocument = await this.processTemplate(
+          template.content,
+          templateData
+        );
+
+        // Generate unique filename for this template
+        const filename = this.generateFilename(
+          packageContent.metadata.title,
+          template.filename,
+          template.id
+        );
+
+        // Save the generated document
+        this.saveDocument(generatedDocument, filename);
+
+        results.push({
+          templateId: template.id,
+          filename,
+          buffer: generatedDocument
+        });
+
+        console.log(`Document generated successfully: ${filename}`);
+
+      } catch (error) {
+        console.error(`Error generating document for template "${template.filename}":`, error);
+        // Continue with other templates even if one fails
+      }
+    }
+
+    if (results.length === 0) {
+      throw new Error('No documents were generated. Check template mappings.');
+    }
+
+    console.log(`Successfully generated ${results.length} document(s)`);
+    return results;
+  }
+
+  /**
+   * Generate a single document for a specific template
+   */
+  static async generateSingleDocument(
+    surveyResponses: Record<string, any>,
+    template: TemplateEntry,
+    mappings: FieldMapping[],
+    packageTitle: string
+  ): Promise<GeneratedDocument> {
+    // Validate inputs
+    if (!surveyResponses || Object.keys(surveyResponses).length === 0) {
+      throw new Error('Survey responses are required for document generation');
+    }
+
+    if (!template) {
+      throw new Error('Template is required for document generation');
+    }
+
+    if (!mappings || mappings.length === 0) {
+      throw new Error('Field mappings are required for document generation');
+    }
+
+    // Transform survey responses using field mappings
+    const templateData = this.transformResponsesToTemplateData(surveyResponses, mappings);
+
+    // Generate document using docxtemplater
+    const generatedDocument = await this.processTemplate(template.content, templateData);
+
+    // Generate unique filename for this template
+    const filename = this.generateFilename(packageTitle, template.filename, template.id);
+
+    // Save the generated document
+    this.saveDocument(generatedDocument, filename);
+
+    return {
+      templateId: template.id,
+      filename,
+      buffer: generatedDocument
+    };
   }
 
   /**
@@ -195,12 +335,13 @@ export class DocumentGeneratorService {
   /**
    * Generate filename for the output document
    */
-  private static generateFilename(packageTitle: string, originalFilename: string): string {
+  private static generateFilename(packageTitle: string, originalFilename: string, templateId?: string): string {
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-').split('T')[0];
     const baseName = packageTitle.replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, '_');
     const extension = originalFilename.split('.').pop() || 'docx';
+    const templateSuffix = templateId ? `_${templateId.replace(/[^a-zA-Z0-9]/g, '')}` : '';
     
-    return `${baseName}_${timestamp}.${extension}`;
+    return `${baseName}${templateSuffix}_${timestamp}.${extension}`;
   }
 
   /**

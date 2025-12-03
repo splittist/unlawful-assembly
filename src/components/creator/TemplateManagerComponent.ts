@@ -1,12 +1,23 @@
 import { DocxParserService, type DocxParseResult } from '@/services/docxParser';
+import type { TemplateEntry } from '@/services/packageService';
 import { getTypeColor } from './uiUtils';
 
 /**
  * Template Manager UI Component
  * Handles template documentation, DOCX upload, and template analysis
+ * Now supports multiple templates per package
  */
 export class TemplateManagerComponent {
   private currentParseResult: DocxParseResult | null = null;
+  private templates: Map<string, { parseResult: DocxParseResult; content: ArrayBuffer }> = new Map();
+  private onTemplatesChange?: (templates: TemplateEntry[]) => void;
+
+  /**
+   * Set a callback for when templates are added/removed
+   */
+  public setOnTemplatesChange(callback: (templates: TemplateEntry[]) => void): void {
+    this.onTemplatesChange = callback;
+  }
 
   /**
    * Get the current parse result from the most recently analyzed template
@@ -15,22 +26,85 @@ export class TemplateManagerComponent {
     return this.currentParseResult;
   }
 
+  /**
+   * Get all templates as TemplateEntry array
+   */
+  public getTemplates(): TemplateEntry[] {
+    return Array.from(this.templates.entries()).map(([id, data]) => ({
+      id,
+      filename: data.parseResult.fileName,
+      content: data.content,
+      placeholders: data.parseResult.placeholders
+    }));
+  }
+
+  /**
+   * Get a specific template by ID
+   */
+  public getTemplate(templateId: string): TemplateEntry | null {
+    const data = this.templates.get(templateId);
+    if (!data) return null;
+    return {
+      id: templateId,
+      filename: data.parseResult.fileName,
+      content: data.content,
+      placeholders: data.parseResult.placeholders
+    };
+  }
+
+  /**
+   * Remove a template by ID
+   */
+  public removeTemplate(templateId: string): boolean {
+    const result = this.templates.delete(templateId);
+    if (result && this.onTemplatesChange) {
+      this.onTemplatesChange(this.getTemplates());
+    }
+    return result;
+  }
+
+  /**
+   * Generate a unique template ID
+   */
+  private generateTemplateId(filename: string): string {
+    const baseName = filename.replace(/\.docx$/i, '').replace(/[^a-zA-Z0-9]/g, '_');
+    const timestamp = Date.now().toString(36);
+    return `template_${baseName}_${timestamp}`;
+  }
+
   public render(container: HTMLElement): void {
     container.innerHTML = `
       <div class="bg-white shadow rounded-lg">
         <div class="px-6 py-4 border-b border-gray-200">
           <h2 class="text-lg font-medium text-gray-900">Template Manager</h2>
-          <p class="mt-1 text-sm text-gray-600">Comprehensive guide for creating DOCX templates with docxtemplater syntax</p>
+          <p class="mt-1 text-sm text-gray-600">Manage multiple DOCX templates with docxtemplater syntax for your package</p>
         </div>
         <div class="p-6 space-y-8">
           
-          <!-- DOCX Template Analysis Section (First - Not Collapsible) -->
+          <!-- Templates List Section -->
           <div class="border border-gray-200 rounded-lg p-6">
             <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-              <span class="bg-indigo-100 text-indigo-800 text-xs font-medium px-2.5 py-0.5 rounded-full mr-3">Analysis</span>
-              Template Analysis & Validation
+              <span class="bg-purple-100 text-purple-800 text-xs font-medium px-2.5 py-0.5 rounded-full mr-3">Templates</span>
+              Package Templates
+              <span id="template-count" class="ml-2 bg-gray-100 text-gray-600 text-xs font-medium px-2.5 py-0.5 rounded-full">0</span>
             </h3>
-            <p class="text-gray-600 mb-4">Upload a DOCX template to analyze placeholders and validate syntax.</p>
+            <p class="text-gray-600 mb-4">Add multiple templates to generate multiple documents from a single survey response.</p>
+            
+            <!-- Templates Grid -->
+            <div id="templates-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+              <div class="text-center py-8 text-gray-500 col-span-full">
+                <p class="text-sm">No templates added yet. Upload templates below.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- DOCX Template Upload Section -->
+          <div class="border border-gray-200 rounded-lg p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+              <span class="bg-indigo-100 text-indigo-800 text-xs font-medium px-2.5 py-0.5 rounded-full mr-3">Upload</span>
+              Add Template
+            </h3>
+            <p class="text-gray-600 mb-4">Upload a DOCX template to analyze placeholders and add to your package.</p>
             
             <!-- File Upload Area -->
             <div class="mb-6">
@@ -110,6 +184,9 @@ export class TemplateManagerComponent {
                   Clear Analysis
                 </button>
                 <div class="space-x-2">
+                  <button id="add-to-package" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded text-sm font-medium" disabled>
+                    ➕ Add to Package
+                  </button>
                   <button id="validate-with-survey" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm font-medium" disabled>
                     Validate with Current Survey
                   </button>
@@ -499,6 +576,8 @@ ${'{{'}/job_duties${'}}'}</pre>
     });
   }
 
+  private currentFileContent: ArrayBuffer | null = null;
+
   private setupDocxUpload(container: HTMLElement): void {
     const uploadArea = container.querySelector('#docx-upload-area') as HTMLElement;
     const fileInput = container.querySelector('#docx-file-input') as HTMLInputElement;
@@ -506,6 +585,7 @@ ${'{{'}/job_duties${'}}'}</pre>
     const clearBtn = container.querySelector('#clear-analysis') as HTMLElement;
     const validateBtn = container.querySelector('#validate-with-survey') as HTMLButtonElement;
     const exportBtn = container.querySelector('#export-placeholders') as HTMLButtonElement;
+    const addToPackageBtn = container.querySelector('#add-to-package') as HTMLButtonElement;
 
     // Handle file input change
     const handleFileUpload = async (file: File) => {
@@ -523,6 +603,9 @@ ${'{{'}/job_duties${'}}'}</pre>
           </div>
         `;
 
+        // Store file content for adding to package later
+        this.currentFileContent = await file.arrayBuffer();
+
         // Parse the DOCX file
         const parseResult = await DocxParserService.parseDocx(file);
         this.currentParseResult = parseResult;
@@ -537,6 +620,7 @@ ${'{{'}/job_duties${'}}'}</pre>
           this.showParseResults(resultsArea, parseResult);
           validateBtn.disabled = false;
           exportBtn.disabled = false;
+          addToPackageBtn.disabled = false;
         }
 
         resultsArea.classList.remove('hidden');
@@ -584,10 +668,42 @@ ${'{{'}/job_duties${'}}'}</pre>
     // Clear analysis handler
     clearBtn.addEventListener('click', () => {
       this.currentParseResult = null;
+      this.currentFileContent = null;
       resultsArea.classList.add('hidden');
       validateBtn.disabled = true;
       exportBtn.disabled = true;
+      addToPackageBtn.disabled = true;
       this.resetUploadArea(uploadArea, fileInput);
+    });
+
+    // Add to package handler
+    addToPackageBtn.addEventListener('click', () => {
+      if (this.currentParseResult && this.currentFileContent) {
+        const templateId = this.generateTemplateId(this.currentParseResult.fileName);
+        this.templates.set(templateId, {
+          parseResult: this.currentParseResult,
+          content: this.currentFileContent
+        });
+        
+        // Update templates list display
+        this.updateTemplatesList(container);
+        
+        // Notify listeners
+        if (this.onTemplatesChange) {
+          this.onTemplatesChange(this.getTemplates());
+        }
+        
+        // Clear the current analysis
+        this.currentParseResult = null;
+        this.currentFileContent = null;
+        resultsArea.classList.add('hidden');
+        validateBtn.disabled = true;
+        exportBtn.disabled = true;
+        addToPackageBtn.disabled = true;
+        this.resetUploadArea(uploadArea, fileInput);
+        
+        console.log(`Template added to package: ${templateId}`);
+      }
     });
 
     // Validate with survey handler
@@ -602,6 +718,52 @@ ${'{{'}/job_duties${'}}'}</pre>
       if (this.currentParseResult) {
         this.exportPlaceholders(this.currentParseResult);
       }
+    });
+  }
+
+  private updateTemplatesList(container: HTMLElement): void {
+    const templatesList = container.querySelector('#templates-list') as HTMLElement;
+    const templateCount = container.querySelector('#template-count') as HTMLElement;
+    
+    const templates = this.getTemplates();
+    templateCount.textContent = templates.length.toString();
+    
+    if (templates.length === 0) {
+      templatesList.innerHTML = `
+        <div class="text-center py-8 text-gray-500 col-span-full">
+          <p class="text-sm">No templates added yet. Upload templates below.</p>
+        </div>
+      `;
+      return;
+    }
+    
+    templatesList.innerHTML = templates.map(template => `
+      <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow" data-template-id="${template.id}">
+        <div class="flex justify-between items-start mb-2">
+          <div>
+            <h4 class="font-medium text-gray-900 truncate" title="${template.filename}">${template.filename}</h4>
+            <p class="text-xs text-gray-500">ID: ${template.id.substring(0, 20)}...</p>
+          </div>
+          <button class="remove-template-btn text-red-500 hover:text-red-700 text-sm p-1" data-template-id="${template.id}" title="Remove template">
+            ✕
+          </button>
+        </div>
+        <div class="text-xs text-gray-600 space-y-1">
+          <div><strong>Placeholders:</strong> ${template.placeholders.length}</div>
+          <div><strong>Size:</strong> ${(template.content.byteLength / 1024).toFixed(1)} KB</div>
+        </div>
+      </div>
+    `).join('');
+    
+    // Set up remove buttons
+    container.querySelectorAll('.remove-template-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const templateId = (e.target as HTMLElement).dataset.templateId;
+        if (templateId && confirm(`Remove template "${templateId}"?`)) {
+          this.removeTemplate(templateId);
+          this.updateTemplatesList(container);
+        }
+      });
     });
   }
 

@@ -365,4 +365,130 @@ describe('DocumentGeneratorService Integration Tests', () => {
       ).resolves.not.toThrow();
     });
   });
+
+  describe('multi-template generation', () => {
+    test('should generate multiple documents from multi-template package', async () => {
+      // Import the multi-template package creator
+      const { createMockMultiTemplatePackageContent } = await import('../helpers/test-utils');
+      const { saveAs } = await import('file-saver');
+      const saveAsMock = vi.mocked(saveAs);
+      
+      // Given: A multi-template package
+      const multiTemplatePackage = createMockMultiTemplatePackageContent();
+      
+      // When: Generate all documents
+      const results = await DocumentGeneratorService.generateAllDocuments(
+        fullSurveyResponses,
+        multiTemplatePackage
+      );
+
+      // Then: Should generate documents for each template
+      expect(results).toHaveLength(2);
+      expect(saveAsMock).toHaveBeenCalledTimes(2);
+      
+      // Verify each document was generated
+      expect(results[0].templateId).toBe('template-contract');
+      expect(results[0].filename).toContain('templatecontract');
+      expect(results[1].templateId).toBe('template-nda');
+      expect(results[1].filename).toContain('templatenda');
+    });
+
+    test('should skip templates without mappings in multi-template package', async () => {
+      // Import the multi-template package creator
+      const { createMockMultiTemplatePackageContent } = await import('../helpers/test-utils');
+      const { saveAs } = await import('file-saver');
+      const saveAsMock = vi.mocked(saveAs);
+      
+      // Given: A multi-template package with one template missing mappings
+      const packageWithMissingMapping = createMockMultiTemplatePackageContent();
+      // Remove mappings for the NDA template
+      packageWithMissingMapping.templateMappings = packageWithMissingMapping.templateMappings.filter(
+        tm => tm.templateId !== 'template-nda'
+      );
+      
+      // When: Generate all documents
+      const results = await DocumentGeneratorService.generateAllDocuments(
+        fullSurveyResponses,
+        packageWithMissingMapping
+      );
+
+      // Then: Should only generate one document (contract only)
+      expect(results).toHaveLength(1);
+      expect(saveAsMock).toHaveBeenCalledTimes(1);
+      expect(results[0].templateId).toBe('template-contract');
+    });
+
+    test('should throw error when package has no templates', async () => {
+      // Given: A package with no templates
+      const emptyTemplatePackage = {
+        ...mockPackageContent,
+        templates: [],
+        template: undefined
+      };
+
+      // When/Then: Should throw error
+      await expect(
+        DocumentGeneratorService.generateAllDocuments(
+          fullSurveyResponses,
+          emptyTemplatePackage as any
+        )
+      ).rejects.toThrow('Package must contain at least one template');
+    });
+
+    test('should throw error when no documents could be generated', async () => {
+      // Import the multi-template package creator
+      const { createMockMultiTemplatePackageContent } = await import('../helpers/test-utils');
+      
+      // Given: A multi-template package with no mappings at all
+      const packageWithNoMappings = createMockMultiTemplatePackageContent();
+      packageWithNoMappings.templateMappings = [];
+      
+      // When/Then: Should throw error
+      await expect(
+        DocumentGeneratorService.generateAllDocuments(
+          fullSurveyResponses,
+          packageWithNoMappings
+        )
+      ).rejects.toThrow('No documents were generated');
+    });
+
+    test('should fall back to multi-template generation when templates array exists', async () => {
+      // Import the multi-template package creator
+      const { createMockMultiTemplatePackageContent } = await import('../helpers/test-utils');
+      const { saveAs } = await import('file-saver');
+      const saveAsMock = vi.mocked(saveAs);
+      
+      // Given: A multi-template package
+      const multiTemplatePackage = createMockMultiTemplatePackageContent();
+      
+      // When: Call generateDocument (legacy method)
+      await DocumentGeneratorService.generateDocument(
+        fullSurveyResponses,
+        multiTemplatePackage
+      );
+
+      // Then: Should generate all documents from templates array
+      expect(saveAsMock).toHaveBeenCalledTimes(2);
+    });
+
+    test('should generate unique filenames for each template', async () => {
+      // Import the multi-template package creator
+      const { createMockMultiTemplatePackageContent } = await import('../helpers/test-utils');
+      const { saveAs } = await import('file-saver');
+      const saveAsMock = vi.mocked(saveAs);
+      
+      // Given: A multi-template package
+      const multiTemplatePackage = createMockMultiTemplatePackageContent();
+      
+      // When: Generate all documents
+      await DocumentGeneratorService.generateAllDocuments(
+        fullSurveyResponses,
+        multiTemplatePackage
+      );
+
+      // Then: Each document should have a unique filename
+      const filenames = saveAsMock.mock.calls.map(call => call[1]);
+      expect(new Set(filenames).size).toBe(filenames.length); // All unique
+    });
+  });
 });

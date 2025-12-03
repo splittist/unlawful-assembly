@@ -1,4 +1,3 @@
-import { DomUtils } from '@/utils/common';
 import { SurveyCreatorService } from '@/services/surveyCreator';
 import { showNotification } from './uiUtils';
 import { PropertyEditorComponent } from './PropertyEditorComponent';
@@ -84,16 +83,6 @@ export class SurveyDesignerComponent {
         this.loadSurveyFile(file);
       }
     });
-
-    // Add a button to test loading the sample survey
-    const loadSampleBtn = DomUtils.createElement('button', 
-      'bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-md text-sm font-medium ml-3',
-      'Load Sample Survey'
-    );
-    loadSampleBtn.addEventListener('click', () => {
-      this.loadSampleSurvey();
-    });
-    container.querySelector('.mb-6')?.appendChild(loadSampleBtn);
   }
 
   /**
@@ -127,28 +116,6 @@ export class SurveyDesignerComponent {
     } catch (error) {
       console.error('Error loading survey file:', error);
       showNotification('Failed to load survey file. Please check the file format.', 'error');
-    }
-  }
-
-  /**
-   * Load a sample survey for testing
-   */
-  private async loadSampleSurvey(): Promise<void> {
-    try {
-      const response = await fetch('/surveys/employment-survey.json');
-      if (!response.ok) {
-        throw new Error('Failed to load sample survey');
-      }
-      const survey = await response.json();
-      
-      this.surveyCreatorService.loadSurvey(survey);
-      showNotification('Sample survey loaded successfully', 'success');
-      
-      console.log('Phase 2 Deliverable: Successfully loaded survey using SurveyCreatorService!');
-      
-    } catch (error) {
-      console.error('Error loading sample survey:', error);
-      showNotification('Failed to load sample survey', 'error');
     }
   }
 }

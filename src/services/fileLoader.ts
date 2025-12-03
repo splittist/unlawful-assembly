@@ -109,7 +109,6 @@ export class FileLoaderService {
       // For now, return a mock list - this would be expanded to read directory contents
       // In a real SharePoint environment, this would query the surveys folder
       return [
-        './surveys/employment-survey-v1.json',
         './surveys/nda-survey-v1.json',
       ];
     } catch (error) {

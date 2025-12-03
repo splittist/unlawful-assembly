@@ -15,252 +15,7 @@ export class TemplateManagerComponent {
         </div>
         <div class="p-6 space-y-8">
           
-          <!-- Basic Placeholders Section -->
-          <div class="border border-gray-200 rounded-lg p-6">
-            <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-              <span class="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full mr-3">Basic</span>
-              Simple Field Replacement
-            </h3>
-            <p class="text-gray-600 mb-4">Replace placeholders with survey response values using double curly braces.</p>
-            
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              <div>
-                <h4 class="font-medium text-gray-900 mb-2">Syntax Examples:</h4>
-                <div class="space-y-3">
-                  <div class="bg-gray-50 p-3 rounded border">
-                    <div class="flex justify-between items-center">
-                      <code class="text-sm font-mono">{{employee_name}}</code>
-                      <button class="copy-btn text-xs text-blue-600 hover:text-blue-800" data-copy="{{employee_name}}">Copy</button>
-                    </div>
-                    <p class="text-xs text-gray-600 mt-1">Basic text replacement</p>
-                  </div>
-                  <div class="bg-gray-50 p-3 rounded border">
-                    <div class="flex justify-between items-center">
-                      <code class="text-sm font-mono">{{start_date}}</code>
-                      <button class="copy-btn text-xs text-blue-600 hover:text-blue-800" data-copy="{{start_date}}">Copy</button>
-                    </div>
-                    <p class="text-xs text-gray-600 mt-1">Date field replacement</p>
-                  </div>
-                  <div class="bg-gray-50 p-3 rounded border">
-                    <div class="flex justify-between items-center">
-                      <code class="text-sm font-mono">{{department}}</code>
-                      <button class="copy-btn text-xs text-blue-600 hover:text-blue-800" data-copy="{{department}}">Copy</button>
-                    </div>
-                    <p class="text-xs text-gray-600 mt-1">Selection field replacement</p>
-                  </div>
-                </div>
-              </div>
-              
-              <div>
-                <h4 class="font-medium text-gray-900 mb-2">Document Example:</h4>
-                <div class="bg-blue-50 p-4 rounded border border-blue-200">
-                  <p class="text-sm font-mono leading-relaxed">
-                    Dear {{employee_name}},<br><br>
-                    Your employment with {{company_name}} will begin on {{start_date}}. 
-                    You will be working in the {{department}} department reporting to {{manager_name}}.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Conditional Logic Section -->
-          <div class="border border-gray-200 rounded-lg p-6">
-            <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-              <span class="bg-yellow-100 text-yellow-800 text-xs font-medium px-2.5 py-0.5 rounded-full mr-3">Advanced</span>
-              Conditional Content
-            </h3>
-            <p class="text-gray-600 mb-4">Show or hide content based on survey responses using conditional statements.</p>
-            
-            <div class="space-y-4">
-              <div>
-                <h4 class="font-medium text-gray-900 mb-2">Basic Conditions:</h4>
-                <div class="bg-gray-50 p-4 rounded border">
-                  <div class="flex justify-between items-start mb-2">
-                    <code class="text-sm font-mono">{{#has_benefits}}Benefits package information...{{/has_benefits}}</code>
-                    <button class="copy-btn text-xs text-blue-600 hover:text-blue-800" data-copy="{{#has_benefits}}Benefits package information...{{/has_benefits}}">Copy</button>
-                  </div>
-                  <p class="text-xs text-gray-600">Shows content only if has_benefits is true or non-empty</p>
-                </div>
-              </div>
-              
-              <div>
-                <h4 class="font-medium text-gray-900 mb-2">Inverted Conditions:</h4>
-                <div class="bg-gray-50 p-4 rounded border">
-                  <div class="flex justify-between items-start mb-2">
-                    <code class="text-sm font-mono">{{^is_remote}}Office location: {{office_address}}{{/is_remote}}</code>
-                    <button class="copy-btn text-xs text-blue-600 hover:text-blue-800" data-copy="{{^is_remote}}Office location: {{office_address}}{{/is_remote}}">Copy</button>
-                  </div>
-                  <p class="text-xs text-gray-600">Shows content only if is_remote is false or empty</p>
-                </div>
-              </div>
-
-              <div>
-                <h4 class="font-medium text-gray-900 mb-2">Complex Example:</h4>
-                <div class="bg-blue-50 p-4 rounded border border-blue-200">
-                  <pre class="text-sm font-mono leading-relaxed">${'{{'}#is_full_time${'}}'}
-Full-time employment benefits include:
-• Health insurance
-• ${'{{'}#has_dental${'}}'}Dental coverage${'{{'}/has_dental${'}}'}
-• ${'{{'}vacation_days${'}}'}  vacation days per year
-${'{{'}/is_full_time${'}}'}
-
-${'{{'}^is_full_time${'}}'}
-Part-time employment terms:
-• Hourly rate: $${'{{'}hourly_rate${'}}'}
-• Scheduled hours: ${'{{'}weekly_hours${'}}'}  per week
-${'{{'}/is_full_time${'}}'}</pre>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Loops Section -->
-          <div class="border border-gray-200 rounded-lg p-6">
-            <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-              <span class="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full mr-3">Expert</span>
-              Loops and Repeating Content
-            </h3>
-            <p class="text-gray-600 mb-4">Repeat content blocks for array data or multiple selections.</p>
-            
-            <div class="space-y-4">
-              <div>
-                <h4 class="font-medium text-gray-900 mb-2">Simple Loop:</h4>
-                <div class="bg-gray-50 p-4 rounded border">
-                  <div class="flex justify-between items-start mb-2">
-                    <code class="text-sm font-mono">{{#responsibilities}}• {{.}}{{/responsibilities}}</code>
-                    <button class="copy-btn text-xs text-blue-600 hover:text-blue-800" data-copy="{{#responsibilities}}• {{.}}{{/responsibilities}}">Copy</button>
-                  </div>
-                  <p class="text-xs text-gray-600">Loops through array items, {{.}} refers to current item</p>
-                </div>
-              </div>
-              
-              <div>
-                <h4 class="font-medium text-gray-900 mb-2">Object Loop:</h4>
-                <div class="bg-gray-50 p-4 rounded border">
-                  <div class="flex justify-between items-start mb-2">
-                    <code class="text-sm font-mono">{{#team_members}}{{name}} - {{title}}{{/team_members}}</code>
-                    <button class="copy-btn text-xs text-blue-600 hover:text-blue-800" data-copy="{{#team_members}}{{name}} - {{title}}{{/team_members}}">Copy</button>
-                  </div>
-                  <p class="text-xs text-gray-600">Loops through objects, access properties by name</p>
-                </div>
-              </div>
-
-              <div>
-                <h4 class="font-medium text-gray-900 mb-2">Complex Example:</h4>
-                <div class="bg-blue-50 p-4 rounded border border-blue-200">
-                  <pre class="text-sm font-mono leading-relaxed">Job Responsibilities:
-${'{{'}#job_duties${'}}'}
-${'{{'}@index${'}}'}.  ${'{{'}title${'}}'}
-   Description: ${'{{'}description${'}}'}
-   ${'{{'}#required_skills${'}}'}• ${'{{'}.${'}}'}${'{{'}/required_skills${'}}'}
-${'{{'}/job_duties${'}}'}</pre>
-                </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Best Practices Section -->
-          <div class="border border-gray-200 rounded-lg p-6">
-            <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-              <span class="bg-purple-100 text-purple-800 text-xs font-medium px-2.5 py-0.5 rounded-full mr-3">Tips</span>
-              Best Practices & Guidelines
-            </h3>
-            
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div>
-                <h4 class="font-medium text-gray-900 mb-3">Field Naming:</h4>
-                <ul class="space-y-2 text-sm text-gray-600">
-                  <li class="flex items-start">
-                    <span class="text-green-500 mr-2">✓</span>
-                    Use lowercase with underscores: <code>employee_name</code>
-                  </li>
-                  <li class="flex items-start">
-                    <span class="text-green-500 mr-2">✓</span>
-                    Be descriptive: <code>start_date</code> not <code>date1</code>
-                  </li>
-                  <li class="flex items-start">
-                    <span class="text-red-500 mr-2">✗</span>
-                    Avoid spaces: <code>employee name</code>
-                  </li>
-                  <li class="flex items-start">
-                    <span class="text-red-500 mr-2">✗</span>
-                    Avoid special characters: <code>employee-name</code>
-                  </li>
-                </ul>
-              </div>
-              
-              <div>
-                <h4 class="font-medium text-gray-900 mb-3">Template Structure:</h4>
-                <ul class="space-y-2 text-sm text-gray-600">
-                  <li class="flex items-start">
-                    <span class="text-green-500 mr-2">✓</span>
-                    Test templates with sample data
-                  </li>
-                  <li class="flex items-start">
-                    <span class="text-green-500 mr-2">✓</span>
-                    Use consistent formatting
-                  </li>
-                  <li class="flex items-start">
-                    <span class="text-green-500 mr-2">✓</span>
-                    Include fallback text for optional fields
-                  </li>
-                  <li class="flex items-start">
-                    <span class="text-green-500 mr-2">✓</span>
-                    Save as .docx format (not .doc)
-                  </li>
-                </ul>
-              </div>
-            </div>
-
-            <div class="mt-6 p-4 bg-amber-50 border border-amber-200 rounded">
-              <h4 class="font-medium text-amber-800 mb-2">⚠️ Important Notes:</h4>
-              <ul class="text-sm text-amber-700 space-y-1">
-                <li>• Always match survey field names exactly with template placeholders</li>
-                <li>• Test conditional logic with different survey response combinations</li>
-                <li>• Use the Mapping Interface to verify field connections before generating documents</li>
-                <li>• Keep template files under 10MB for optimal performance</li>
-              </ul>
-            </div>
-          </div>
-
-          <!-- Quick Reference Section -->
-          <div class="border border-gray-200 rounded-lg p-6">
-            <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-              <span class="bg-gray-100 text-gray-800 text-xs font-medium px-2.5 py-0.5 rounded-full mr-3">Reference</span>
-              Quick Syntax Reference
-            </h3>
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <div class="bg-gray-50 p-4 rounded border">
-                <h4 class="font-medium text-gray-900 mb-2">Basic</h4>
-                <code class="text-xs font-mono text-gray-700">{{field_name}}</code>
-              </div>
-              <div class="bg-gray-50 p-4 rounded border">
-                <h4 class="font-medium text-gray-900 mb-2">If Condition</h4>
-                <code class="text-xs font-mono text-gray-700">{{#field}}...{{/field}}</code>
-              </div>
-              <div class="bg-gray-50 p-4 rounded border">
-                <h4 class="font-medium text-gray-900 mb-2">Unless Condition</h4>
-                <code class="text-xs font-mono text-gray-700">{{^field}}...{{/field}}</code>
-              </div>
-              <div class="bg-gray-50 p-4 rounded border">
-                <h4 class="font-medium text-gray-900 mb-2">Loop Array</h4>
-                <code class="text-xs font-mono text-gray-700">{{#array}}{{.}}{{/array}}</code>
-              </div>
-              <div class="bg-gray-50 p-4 rounded border">
-                <h4 class="font-medium text-gray-900 mb-2">Loop Objects</h4>
-                <code class="text-xs font-mono text-gray-700">{{#objects}}{{prop}}{{/objects}}</code>
-              </div>
-              <div class="bg-gray-50 p-4 rounded border">
-                <h4 class="font-medium text-gray-900 mb-2">Index in Loop</h4>
-                <code class="text-xs font-mono text-gray-700">{{@index}}</code>
-              </div>
-            </div>
-          </div>
-
-          <!-- DOCX Template Analysis Section -->
+          <!-- DOCX Template Analysis Section (First - Not Collapsible) -->
           <div class="border border-gray-200 rounded-lg p-6">
             <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
               <span class="bg-indigo-100 text-indigo-800 text-xs font-medium px-2.5 py-0.5 rounded-full mr-3">Analysis</span>
@@ -357,6 +112,283 @@ ${'{{'}/job_duties${'}}'}</pre>
             </div>
           </div>
 
+          <!-- Quick Reference Section (Collapsible) -->
+          <div class="border border-gray-200 rounded-lg">
+            <button class="collapsible-header w-full px-6 py-4 flex items-center justify-between text-left hover:bg-gray-50 transition-colors" data-target="quick-reference-content">
+              <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                <span class="bg-gray-100 text-gray-800 text-xs font-medium px-2.5 py-0.5 rounded-full mr-3">Reference</span>
+                Quick Syntax Reference
+              </h3>
+              <svg class="collapsible-icon w-5 h-5 text-gray-500 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+            <div id="quick-reference-content" class="collapsible-content hidden px-6 pb-6">
+              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div class="bg-gray-50 p-4 rounded border">
+                  <h4 class="font-medium text-gray-900 mb-2">Basic</h4>
+                  <code class="text-xs font-mono text-gray-700">{{field_name}}</code>
+                </div>
+                <div class="bg-gray-50 p-4 rounded border">
+                  <h4 class="font-medium text-gray-900 mb-2">If Condition</h4>
+                  <code class="text-xs font-mono text-gray-700">{{#field}}...{{/field}}</code>
+                </div>
+                <div class="bg-gray-50 p-4 rounded border">
+                  <h4 class="font-medium text-gray-900 mb-2">Unless Condition</h4>
+                  <code class="text-xs font-mono text-gray-700">{{^field}}...{{/field}}</code>
+                </div>
+                <div class="bg-gray-50 p-4 rounded border">
+                  <h4 class="font-medium text-gray-900 mb-2">Loop Array</h4>
+                  <code class="text-xs font-mono text-gray-700">{{#array}}{{.}}{{/array}}</code>
+                </div>
+                <div class="bg-gray-50 p-4 rounded border">
+                  <h4 class="font-medium text-gray-900 mb-2">Loop Objects</h4>
+                  <code class="text-xs font-mono text-gray-700">{{#objects}}{{prop}}{{/objects}}</code>
+                </div>
+                <div class="bg-gray-50 p-4 rounded border">
+                  <h4 class="font-medium text-gray-900 mb-2">Index in Loop</h4>
+                  <code class="text-xs font-mono text-gray-700">{{@index}}</code>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Best Practices Section (Collapsible) -->
+          <div class="border border-gray-200 rounded-lg">
+            <button class="collapsible-header w-full px-6 py-4 flex items-center justify-between text-left hover:bg-gray-50 transition-colors" data-target="best-practices-content">
+              <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                <span class="bg-purple-100 text-purple-800 text-xs font-medium px-2.5 py-0.5 rounded-full mr-3">Tips</span>
+                Best Practices & Guidelines
+              </h3>
+              <svg class="collapsible-icon w-5 h-5 text-gray-500 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+            <div id="best-practices-content" class="collapsible-content hidden px-6 pb-6">
+              <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div>
+                  <h4 class="font-medium text-gray-900 mb-3">Field Naming:</h4>
+                  <ul class="space-y-2 text-sm text-gray-600">
+                    <li class="flex items-start">
+                      <span class="text-green-500 mr-2">✓</span>
+                      Use lowercase with underscores: <code>employee_name</code>
+                    </li>
+                    <li class="flex items-start">
+                      <span class="text-green-500 mr-2">✓</span>
+                      Be descriptive: <code>start_date</code> not <code>date1</code>
+                    </li>
+                    <li class="flex items-start">
+                      <span class="text-red-500 mr-2">✗</span>
+                      Avoid spaces: <code>employee name</code>
+                    </li>
+                    <li class="flex items-start">
+                      <span class="text-red-500 mr-2">✗</span>
+                      Avoid special characters: <code>employee-name</code>
+                    </li>
+                  </ul>
+                </div>
+                
+                <div>
+                  <h4 class="font-medium text-gray-900 mb-3">Template Structure:</h4>
+                  <ul class="space-y-2 text-sm text-gray-600">
+                    <li class="flex items-start">
+                      <span class="text-green-500 mr-2">✓</span>
+                      Test templates with sample data
+                    </li>
+                    <li class="flex items-start">
+                      <span class="text-green-500 mr-2">✓</span>
+                      Use consistent formatting
+                    </li>
+                    <li class="flex items-start">
+                      <span class="text-green-500 mr-2">✓</span>
+                      Include fallback text for optional fields
+                    </li>
+                    <li class="flex items-start">
+                      <span class="text-green-500 mr-2">✓</span>
+                      Save as .docx format (not .doc)
+                    </li>
+                  </ul>
+                </div>
+              </div>
+
+              <div class="mt-6 p-4 bg-amber-50 border border-amber-200 rounded">
+                <h4 class="font-medium text-amber-800 mb-2">⚠️ Important Notes:</h4>
+                <ul class="text-sm text-amber-700 space-y-1">
+                  <li>• Always match survey field names exactly with template placeholders</li>
+                  <li>• Test conditional logic with different survey response combinations</li>
+                  <li>• Use the Mapping Interface to verify field connections before generating documents</li>
+                  <li>• Keep template files under 10MB for optimal performance</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <!-- Basic Placeholders Section (Collapsible) -->
+          <div class="border border-gray-200 rounded-lg">
+            <button class="collapsible-header w-full px-6 py-4 flex items-center justify-between text-left hover:bg-gray-50 transition-colors" data-target="basic-placeholders-content">
+              <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                <span class="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full mr-3">Basic</span>
+                Simple Field Replacement
+              </h3>
+              <svg class="collapsible-icon w-5 h-5 text-gray-500 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+            <div id="basic-placeholders-content" class="collapsible-content hidden px-6 pb-6">
+              <p class="text-gray-600 mb-4">Replace placeholders with survey response values using double curly braces.</p>
+              
+              <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <div>
+                  <h4 class="font-medium text-gray-900 mb-2">Syntax Examples:</h4>
+                  <div class="space-y-3">
+                    <div class="bg-gray-50 p-3 rounded border">
+                      <div class="flex justify-between items-center">
+                        <code class="text-sm font-mono">{{employee_name}}</code>
+                        <button class="copy-btn text-xs text-blue-600 hover:text-blue-800" data-copy="{{employee_name}}">Copy</button>
+                      </div>
+                      <p class="text-xs text-gray-600 mt-1">Basic text replacement</p>
+                    </div>
+                    <div class="bg-gray-50 p-3 rounded border">
+                      <div class="flex justify-between items-center">
+                        <code class="text-sm font-mono">{{start_date}}</code>
+                        <button class="copy-btn text-xs text-blue-600 hover:text-blue-800" data-copy="{{start_date}}">Copy</button>
+                      </div>
+                      <p class="text-xs text-gray-600 mt-1">Date field replacement</p>
+                    </div>
+                    <div class="bg-gray-50 p-3 rounded border">
+                      <div class="flex justify-between items-center">
+                        <code class="text-sm font-mono">{{department}}</code>
+                        <button class="copy-btn text-xs text-blue-600 hover:text-blue-800" data-copy="{{department}}">Copy</button>
+                      </div>
+                      <p class="text-xs text-gray-600 mt-1">Selection field replacement</p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div>
+                  <h4 class="font-medium text-gray-900 mb-2">Document Example:</h4>
+                  <div class="bg-blue-50 p-4 rounded border border-blue-200">
+                    <p class="text-sm font-mono leading-relaxed">
+                      Dear {{employee_name}},<br><br>
+                      Your employment with {{company_name}} will begin on {{start_date}}. 
+                      You will be working in the {{department}} department reporting to {{manager_name}}.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Conditional Logic Section (Collapsible) -->
+          <div class="border border-gray-200 rounded-lg">
+            <button class="collapsible-header w-full px-6 py-4 flex items-center justify-between text-left hover:bg-gray-50 transition-colors" data-target="conditional-content">
+              <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                <span class="bg-yellow-100 text-yellow-800 text-xs font-medium px-2.5 py-0.5 rounded-full mr-3">Advanced</span>
+                Conditional Content
+              </h3>
+              <svg class="collapsible-icon w-5 h-5 text-gray-500 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+            <div id="conditional-content" class="collapsible-content hidden px-6 pb-6">
+              <p class="text-gray-600 mb-4">Show or hide content based on survey responses using conditional statements.</p>
+              
+              <div class="space-y-4">
+                <div>
+                  <h4 class="font-medium text-gray-900 mb-2">Basic Conditions:</h4>
+                  <div class="bg-gray-50 p-4 rounded border">
+                    <div class="flex justify-between items-start mb-2">
+                      <code class="text-sm font-mono">{{#has_benefits}}Benefits package information...{{/has_benefits}}</code>
+                      <button class="copy-btn text-xs text-blue-600 hover:text-blue-800" data-copy="{{#has_benefits}}Benefits package information...{{/has_benefits}}">Copy</button>
+                    </div>
+                    <p class="text-xs text-gray-600">Shows content only if has_benefits is true or non-empty</p>
+                  </div>
+                </div>
+                
+                <div>
+                  <h4 class="font-medium text-gray-900 mb-2">Inverted Conditions:</h4>
+                  <div class="bg-gray-50 p-4 rounded border">
+                    <div class="flex justify-between items-start mb-2">
+                      <code class="text-sm font-mono">{{^is_remote}}Office location: {{office_address}}{{/is_remote}}</code>
+                      <button class="copy-btn text-xs text-blue-600 hover:text-blue-800" data-copy="{{^is_remote}}Office location: {{office_address}}{{/is_remote}}">Copy</button>
+                    </div>
+                    <p class="text-xs text-gray-600">Shows content only if is_remote is false or empty</p>
+                  </div>
+                </div>
+
+                <div>
+                  <h4 class="font-medium text-gray-900 mb-2">Complex Example:</h4>
+                  <div class="bg-blue-50 p-4 rounded border border-blue-200">
+                    <pre class="text-sm font-mono leading-relaxed">${'{{'}#is_full_time${'}}'}
+Full-time employment benefits include:
+• Health insurance
+• ${'{{'}#has_dental${'}}'}Dental coverage${'{{'}/has_dental${'}}'}
+• ${'{{'}vacation_days${'}}'}  vacation days per year
+${'{{'}/is_full_time${'}}'}
+
+${'{{'}^is_full_time${'}}'}
+Part-time employment terms:
+• Hourly rate: $${'{{'}hourly_rate${'}}'}
+• Scheduled hours: ${'{{'}weekly_hours${'}}'}  per week
+${'{{'}/is_full_time${'}}'}</pre>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Loops Section (Collapsible) -->
+          <div class="border border-gray-200 rounded-lg">
+            <button class="collapsible-header w-full px-6 py-4 flex items-center justify-between text-left hover:bg-gray-50 transition-colors" data-target="loops-content">
+              <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                <span class="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full mr-3">Expert</span>
+                Loops and Repeating Content
+              </h3>
+              <svg class="collapsible-icon w-5 h-5 text-gray-500 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+            <div id="loops-content" class="collapsible-content hidden px-6 pb-6">
+              <p class="text-gray-600 mb-4">Repeat content blocks for array data or multiple selections.</p>
+              
+              <div class="space-y-4">
+                <div>
+                  <h4 class="font-medium text-gray-900 mb-2">Simple Loop:</h4>
+                  <div class="bg-gray-50 p-4 rounded border">
+                    <div class="flex justify-between items-start mb-2">
+                      <code class="text-sm font-mono">{{#responsibilities}}• {{.}}{{/responsibilities}}</code>
+                      <button class="copy-btn text-xs text-blue-600 hover:text-blue-800" data-copy="{{#responsibilities}}• {{.}}{{/responsibilities}}">Copy</button>
+                    </div>
+                    <p class="text-xs text-gray-600">Loops through array items, {{.}} refers to current item</p>
+                  </div>
+                </div>
+                
+                <div>
+                  <h4 class="font-medium text-gray-900 mb-2">Object Loop:</h4>
+                  <div class="bg-gray-50 p-4 rounded border">
+                    <div class="flex justify-between items-start mb-2">
+                      <code class="text-sm font-mono">{{#team_members}}{{name}} - {{title}}{{/team_members}}</code>
+                      <button class="copy-btn text-xs text-blue-600 hover:text-blue-800" data-copy="{{#team_members}}{{name}} - {{title}}{{/team_members}}">Copy</button>
+                    </div>
+                    <p class="text-xs text-gray-600">Loops through objects, access properties by name</p>
+                  </div>
+                </div>
+
+                <div>
+                  <h4 class="font-medium text-gray-900 mb-2">Complex Example:</h4>
+                  <div class="bg-blue-50 p-4 rounded border border-blue-200">
+                    <pre class="text-sm font-mono leading-relaxed">Job Responsibilities:
+${'{{'}#job_duties${'}}'}
+${'{{'}@index${'}}'}.  ${'{{'}title${'}}'}
+   Description: ${'{{'}description${'}}'}
+   ${'{{'}#required_skills${'}}'}• ${'{{'}.${'}}'}${'{{'}/required_skills${'}}'}
+${'{{'}/job_duties${'}}'}</pre>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
         </div>
       </div>
     `;
@@ -365,6 +397,55 @@ ${'{{'}/job_duties${'}}'}</pre>
     this.setupCopyButtons(container);
     // Set up DOCX upload functionality
     this.setupDocxUpload(container);
+    // Set up collapsible sections
+    this.setupCollapsibleSections(container);
+  }
+
+  private setupCollapsibleSections(container: HTMLElement): void {
+    container.querySelectorAll('.collapsible-header').forEach(header => {
+      const targetId = header.getAttribute('data-target');
+      if (!targetId) {
+        console.warn('Collapsible header missing data-target attribute:', header);
+        return;
+      }
+      
+      const content = container.querySelector(`#${targetId}`);
+      if (!content) {
+        console.warn('Collapsible content not found for target:', targetId);
+        return;
+      }
+      
+      // Set up ARIA attributes for accessibility
+      header.setAttribute('aria-expanded', 'false');
+      header.setAttribute('aria-controls', targetId);
+      content.setAttribute('aria-hidden', 'true');
+      
+      const toggleCollapsible = () => {
+        const isExpanded = header.getAttribute('aria-expanded') === 'true';
+        const icon = header.querySelector('.collapsible-icon');
+        
+        // Toggle state
+        header.setAttribute('aria-expanded', String(!isExpanded));
+        content.setAttribute('aria-hidden', String(isExpanded));
+        content.classList.toggle('hidden');
+        
+        if (icon) {
+          icon.classList.toggle('rotate-180');
+        }
+      };
+      
+      // Handle click events
+      header.addEventListener('click', toggleCollapsible);
+      
+      // Handle keyboard events for accessibility (Enter and Space)
+      header.addEventListener('keydown', (e) => {
+        const keyboardEvent = e as KeyboardEvent;
+        if (keyboardEvent.key === 'Enter' || keyboardEvent.key === ' ') {
+          e.preventDefault();
+          toggleCollapsible();
+        }
+      });
+    });
   }
 
   private setupCopyButtons(container: HTMLElement): void {

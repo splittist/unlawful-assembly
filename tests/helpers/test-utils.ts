@@ -173,7 +173,7 @@ export function createMockPackageContent() {
           mapping: 'employment-mapping.json'
         }
       ],
-      survey: 'employment-survey.json'
+      survey: 'nda-survey.json'
     },
     survey: {
       title: 'Employment Information',

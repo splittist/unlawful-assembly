@@ -38,7 +38,8 @@ class CreatorApp {
     );
     this.packageDefinitionComponent = new PackageDefinitionComponent(
       this.mappingService,
-      this.surveyCreatorService
+      this.surveyCreatorService,
+      this.templateManagerComponent
     );
     
     this.init();

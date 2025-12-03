@@ -1,18 +1,18 @@
 {
-  "id": "employment-contract-v1",
-  "name": "Employment Contract Package",
-  "description": "Complete employment contract generation package with survey and template",
+  "id": "nda-package-v1",
+  "name": "NDA Package",
+  "description": "Non-disclosure agreement package with survey and template",
   "version": "1.0.0",
   "createdDate": "2024-01-01T00:00:00.000Z",
   "createdBy": "Test User",
   "lastUpdated": "2024-01-01T00:00:00.000Z",
   "templates": [
     {
-      "id": "employment-template-1",
-      "name": "Standard Employment Contract",
-      "file": "employment-contract.docx",
-      "mapping": "employment-mappings.json"
+      "id": "nda-template-1",
+      "name": "Standard NDA",
+      "file": "nda-agreement.docx",
+      "mapping": "nda-mappings.json"
     }
   ],
-  "survey": "employment-survey.json"
+  "survey": "nda-survey.json"
 }

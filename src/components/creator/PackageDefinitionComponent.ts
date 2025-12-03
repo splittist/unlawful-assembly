@@ -1,6 +1,7 @@
-import { PackageService, type PackageContent } from '@/services/packageService';
+import { PackageService, type PackageContent, type TemplateMappings } from '@/services/packageService';
 import { FieldMappingService } from '@/services/fieldMapping';
 import { SurveyCreatorService } from '@/services/surveyCreator';
+import { TemplateManagerComponent } from './TemplateManagerComponent';
 import { showNotification } from './uiUtils';
 
 /**
@@ -10,11 +11,17 @@ import { showNotification } from './uiUtils';
 export class PackageDefinitionComponent {
   private mappingService: FieldMappingService;
   private surveyCreatorService: SurveyCreatorService;
+  private templateManagerComponent: TemplateManagerComponent;
   private currentPackage: PackageContent | null = null;
 
-  constructor(mappingService: FieldMappingService, surveyCreatorService: SurveyCreatorService) {
+  constructor(
+    mappingService: FieldMappingService,
+    surveyCreatorService: SurveyCreatorService,
+    templateManagerComponent: TemplateManagerComponent
+  ) {
     this.mappingService = mappingService;
     this.surveyCreatorService = surveyCreatorService;
+    this.templateManagerComponent = templateManagerComponent;
   }
 
   public render(container: HTMLElement): void {
@@ -285,7 +292,8 @@ List any requirements..."></textarea>
     });
 
     importTemplateBtn.addEventListener('click', () => {
-      showNotification('Template import will use data from Template Manager tab', 'info');
+      this.importTemplatesFromInterface();
+      this.populatePackageForm(container);
     });
 
     importMappingsBtn.addEventListener('click', () => {
@@ -564,13 +572,87 @@ List any requirements..."></textarea>
     }
   }
 
+  /**
+   * Import templates from the Template Manager tab
+   */
+  private importTemplatesFromInterface(): void {
+    try {
+      const templates = this.templateManagerComponent.getTemplates();
+
+      if (templates.length === 0) {
+        showNotification('No templates found in Template Manager. Please upload templates first.', 'warning');
+        return;
+      }
+
+      if (this.currentPackage) {
+        this.currentPackage.templates = templates;
+        showNotification(`Imported ${templates.length} template(s) from Template Manager`, 'success');
+      }
+    } catch (error) {
+      console.error('Error importing templates:', error);
+      showNotification('Failed to import templates from Template Manager', 'error');
+    }
+  }
+
+  /**
+   * Import mappings from the Mapping Interface tab
+   * Handles both legacy mappings and per-template mappings for multi-template packages
+   */
   private importMappingsFromInterface(): void {
-    // This would get the current mappings from the Mapping Interface tab
-    const mockMappings = this.mappingService.getMappings();
-    
-    if (this.currentPackage) {
-      this.currentPackage.mappings = mockMappings;
-      showNotification(`Imported ${mockMappings.length} mappings from Mapping Interface`, 'success');
+    try {
+      const mappings = this.mappingService.getMappings();
+
+      if (mappings.length === 0) {
+        showNotification('No mappings found. Please create mappings in the Mapping Interface first.', 'warning');
+        return;
+      }
+
+      if (this.currentPackage) {
+        // Set the legacy mappings for backward compatibility
+        this.currentPackage.mappings = mappings;
+
+        // Build per-template mappings for multi-template support
+        if (this.currentPackage.templates && this.currentPackage.templates.length > 0) {
+          const templateMappings: TemplateMappings[] = [];
+
+          for (const template of this.currentPackage.templates) {
+            // Get placeholders for this template
+            const templatePlaceholderNames = new Set(
+              template.placeholders.map(p => p.name)
+            );
+
+            // Filter mappings that apply to this template's placeholders
+            const relevantMappings = mappings.filter(m =>
+              templatePlaceholderNames.has(m.placeholder)
+            );
+
+            if (relevantMappings.length > 0) {
+              templateMappings.push({
+                templateId: template.id,
+                mappings: relevantMappings
+              });
+            }
+          }
+
+          this.currentPackage.templateMappings = templateMappings;
+
+          const templateCount = templateMappings.length;
+          showNotification(
+            `Imported ${mappings.length} mapping(s) across ${templateCount} template(s) from Mapping Interface`,
+            'success'
+          );
+        } else {
+          // No templates in package, just use legacy mappings
+          this.currentPackage.templateMappings = [];
+          showNotification(
+            `Imported ${mappings.length} mapping(s) from Mapping Interface`,
+            'success'
+          );
+        }
+      }
+    } catch (error) {
+      console.error('Error importing mappings:', error);
+      showNotification('Failed to import mappings from Mapping Interface', 'error');
     }
   }
 }

@@ -301,7 +301,8 @@ export class DocumentGeneratorService {
       const doc = new Docxtemplater(zip, {
         paragraphLoop: true,
         linebreaks: true,
-        errorLogging: true
+        errorLogging: true,
+        delimiters: { start: "{{", end: "}}" },
       });
 
       console.log('Template loaded, rendering with data...');
@@ -400,4 +401,5 @@ export class DocumentGeneratorService {
   ): Record<string, any> {
     return this.transformResponsesToTemplateData(surveyResponses, fieldMappings);
   }
+
 }

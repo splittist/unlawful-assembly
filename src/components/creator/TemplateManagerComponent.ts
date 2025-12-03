@@ -1,5 +1,6 @@
 import { DocxParserService, type DocxParseResult } from '@/services/docxParser';
 import type { TemplateEntry } from '@/services/packageService';
+import { SurveyCreatorService } from '@/services/surveyCreator';
 import { getTypeColor } from './uiUtils';
 
 /**
@@ -11,6 +12,11 @@ export class TemplateManagerComponent {
   private currentParseResult: DocxParseResult | null = null;
   private templates: Map<string, { parseResult: DocxParseResult; content: ArrayBuffer }> = new Map();
   private onTemplatesChange?: (templates: TemplateEntry[]) => void;
+  private surveyCreatorService: SurveyCreatorService;
+
+  constructor(surveyCreatorService: SurveyCreatorService) {
+    this.surveyCreatorService = surveyCreatorService;
+  }
 
   /**
    * Set a callback for when templates are added/removed
@@ -848,11 +854,10 @@ ${'{{'}/job_duties${'}}'}</pre>
   }
 
   private validateWithSurvey(container: HTMLElement, parseResult: DocxParseResult): void {
-    // This would get survey fields from the Survey Designer tab
-    // For now, we'll use mock survey fields
-    const mockSurveyFields = ['employee_name', 'start_date', 'department', 'manager_name', 'company_name'];
+    // Get real survey fields from the Survey Creator service
+    const surveyFields = this.surveyCreatorService.getSurveyFields();
     
-    const validation = DocxParserService.validatePlaceholders(parseResult.placeholders, mockSurveyFields);
+    const validation = DocxParserService.validatePlaceholders(parseResult.placeholders, surveyFields);
     
     const validationSection = container.querySelector('#validation-section')!;
     const validPlaceholders = container.querySelector('#valid-placeholders')!;

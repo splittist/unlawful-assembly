@@ -30,7 +30,7 @@ class CreatorApp {
     
     // Initialize UI components
     this.surveyDesignerComponent = new SurveyDesignerComponent(this.surveyCreatorService);
-    this.templateManagerComponent = new TemplateManagerComponent();
+    this.templateManagerComponent = new TemplateManagerComponent(this.surveyCreatorService);
     this.mappingInterfaceComponent = new MappingInterfaceComponent(
       this.mappingService,
       this.surveyCreatorService,

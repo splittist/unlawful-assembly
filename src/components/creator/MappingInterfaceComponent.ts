@@ -272,9 +272,32 @@ export class MappingInterfaceComponent {
       // Get survey fields from Survey Creator service
       const surveyFields = this.surveyCreatorService.getSurveyFields();
       
-      // Get template placeholders from Template Manager component
-      const parseResult = this.templateManagerComponent.getParseResult();
-      const placeholders = parseResult?.placeholders ?? [];
+      // Get template placeholders from all templates added to the package
+      const templates = this.templateManagerComponent.getTemplates();
+      
+      // Aggregate placeholders from all templates, avoiding duplicates
+      const placeholderMap = new Map<string, DocxPlaceholder>();
+      
+      for (const template of templates) {
+        for (const placeholder of template.placeholders) {
+          // Use placeholder name as key to avoid duplicates across templates
+          if (!placeholderMap.has(placeholder.name)) {
+            placeholderMap.set(placeholder.name, placeholder);
+          }
+        }
+      }
+      
+      // Also check the staging parse result (for template being analyzed but not yet added)
+      const stagingParseResult = this.templateManagerComponent.getParseResult();
+      if (stagingParseResult) {
+        for (const placeholder of stagingParseResult.placeholders) {
+          if (!placeholderMap.has(placeholder.name)) {
+            placeholderMap.set(placeholder.name, placeholder);
+          }
+        }
+      }
+      
+      const placeholders = Array.from(placeholderMap.values());
 
       // Validate that we have data to work with
       if (surveyFields.length === 0 && placeholders.length === 0) {

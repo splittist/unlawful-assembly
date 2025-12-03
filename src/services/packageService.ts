@@ -179,10 +179,18 @@ export class PackageService {
     const hasTemplateMappings = packageContent.templateMappings && packageContent.templateMappings.length > 0;
     const hasLegacyMappings = packageContent.mappings && packageContent.mappings.length > 0;
 
+    // Create a Map for O(1) lookup of template mappings by templateId
+    const templateMappingsMap = new Map<string, TemplateMappings>();
+    if (hasTemplateMappings) {
+      for (const tm of packageContent.templateMappings) {
+        templateMappingsMap.set(tm.templateId, tm);
+      }
+    }
+
     if (hasTemplates) {
       // Validate per-template mappings
       for (const template of packageContent.templates) {
-        const templateMapping = packageContent.templateMappings?.find(tm => tm.templateId === template.id);
+        const templateMapping = templateMappingsMap.get(template.id);
         if (!templateMapping || templateMapping.mappings.length === 0) {
           warnings.push(`No field mappings defined for template "${template.filename}" - documents cannot be generated without mappings`);
         }
@@ -198,7 +206,7 @@ export class PackageService {
       let totalMapped = 0;
 
       for (const template of packageContent.templates) {
-        const templateMapping = packageContent.templateMappings.find(tm => tm.templateId === template.id);
+        const templateMapping = templateMappingsMap.get(template.id);
         const requiredPlaceholders = template.placeholders.filter(p => p.isRequired || p.type === 'simple');
         const mappedPlaceholders = templateMapping?.mappings.map(m => m.placeholder) || [];
         const mappedRequiredCount = requiredPlaceholders.filter(p => mappedPlaceholders.includes(p.name)).length;

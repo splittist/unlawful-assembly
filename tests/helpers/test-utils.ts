@@ -327,7 +327,9 @@ export function createMockMultiTemplatePackageContent() {
         ]
       }
     ],
-    mappings: [] // Empty for multi-template packages
+    // Legacy mappings field is empty for multi-template packages.
+    // Multi-template packages use templateMappings instead for per-template field mappings.
+    mappings: []
   };
 }
 

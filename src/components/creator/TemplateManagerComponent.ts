@@ -746,11 +746,11 @@ ${'{{'}/job_duties${'}}'}</pre>
     templatesList.innerHTML = templates.map(template => `
       <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow" data-template-id="${template.id}">
         <div class="flex justify-between items-start mb-2">
-          <div>
-            <h4 class="font-medium text-gray-900 truncate" title="${template.filename}">${template.filename}</h4>
+          <div class="min-w-0 flex-1 mr-2">
+            <h4 class="font-medium text-gray-900 break-words" title="${template.filename}">${template.filename}</h4>
             <p class="text-xs text-gray-500">ID: ${template.id.substring(0, 20)}...</p>
           </div>
-          <button class="remove-template-btn text-red-500 hover:text-red-700 text-sm p-1" data-template-id="${template.id}" title="Remove template">
+          <button class="remove-template-btn text-red-500 hover:text-red-700 text-sm p-1 flex-shrink-0" data-template-id="${template.id}" title="Remove template">
             ✕
           </button>
         </div>

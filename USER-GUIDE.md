@@ -1,8 +1,8 @@
-# Document Assembly MVP - User Guide
+# Document Assembly - User Guide
 
 ## 🎯 Overview
 
-The Document Assembly MVP is a comprehensive system that allows legal professionals to create automated document generation workflows. The system consists of two main interfaces:
+The Document Assembly Tool is a comprehensive system that allows legal professionals to create automated document generation workflows. The system consists of two main interfaces:
 
 1. **Document Assembly Creator** (`creator.html`) - For creating surveys, managing templates, and building packages
 2. **Document Assembly User Interface** (`index.html`) - For end users to complete surveys and generate documents
@@ -21,7 +21,7 @@ The Document Assembly MVP is a comprehensive system that allows legal profession
 ### For End Users (Document Generators)
 
 1. **Open the User Interface**: Navigate to `index.html` 
-2. **Load Package**: Upload a ZIP package or try the demo
+2. **Load Package**: Upload a ZIP package
 3. **Complete Survey**: Fill out all required fields
 4. **Generate Document**: Click submit to automatically generate and download your document
 
@@ -100,7 +100,6 @@ The Document Assembly MVP is a comprehensive system that allows legal profession
 - **Upload Methods**:
   - Drag-and-drop ZIP file upload
   - Click to browse and select file
-  - Try demo employment contract package
 - **Validation Process**:
   - File format verification (.zip required)
   - Size limit checking (50MB maximum)
@@ -116,7 +115,6 @@ The Document Assembly MVP is a comprehensive system that allows legal profession
   - Dynamic form generation from package content
   - Progressive disclosure for multi-page surveys
   - Real-time validation and error checking
-  - Auto-save draft functionality (coming in future version)
 - **Data Collection**:
   - Multiple input types supported
   - Required field enforcement
@@ -207,7 +205,7 @@ The Document Assembly MVP is a comprehensive system that allows legal profession
 ### User Interface (`index.html`)
 
 #### Main Sections
-1. **Package Loading**: Upload area and demo packages
+1. **Package Loading**: Upload area for packages
 2. **Survey Rendering**: Dynamic form display
 3. **Progress Tracking**: Survey completion status
 4. **Results Display**: Success/error messages and download links
@@ -244,19 +242,13 @@ The Document Assembly MVP is a comprehensive system that allows legal profession
 
 ### End User Testing  
 
-#### Test Case 1: Demo Package Flow
-1. Load the demo employment contract package
-2. Complete all survey questions
-3. Submit to generate document
-4. **Expected Result**: DOCX downloads with populated data
-
-#### Test Case 2: File Upload Flow
+#### Test Case 1: Package Upload Flow
 1. Upload a custom package ZIP file
 2. Complete the survey rendered from package
 3. Generate and download document
-4. **Expected Result**: Custom document generated successfully
+4. **Expected Result**: Document generated successfully
 
-#### Test Case 3: Error Scenarios
+#### Test Case 2: Error Scenarios
 1. Upload invalid ZIP file
 2. Try to complete survey with missing required fields
 3. Test package without template or mappings
@@ -384,4 +376,4 @@ The Document Assembly MVP is a comprehensive system that allows legal profession
 
 ---
 
-*This user guide covers the Phase 2 MVP implementation. For technical documentation and API details, see the Technical Documentation.*
+*For technical documentation and API details, see [TECHNICAL-DOCS.md](TECHNICAL-DOCS.md).*

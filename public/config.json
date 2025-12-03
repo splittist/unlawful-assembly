@@ -1,14 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2025-10-11T10:30:00Z",
-  "packages": [
-    {
-      "id": "employment-pkg-001",
-      "configFile": "./packages/employment-package.json"
-    },
-    {
-      "id": "nda-pkg-002", 
-      "configFile": "./packages/nda-package.json"
-    }
-  ]
+  "lastUpdated": "2025-12-02T00:00:00Z",
+  "description": "Document assembly package configuration for user trials",
+  "packages": []
 }

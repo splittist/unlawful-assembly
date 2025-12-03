@@ -1,14 +1,14 @@
-# Document Assembly MVP - Technical Documentation
+# Document Assembly - Technical Documentation
 
 ## 🏗️ Architecture Overview
 
-The Document Assembly MVP is a client-side web application built with modern web technologies. It follows a modular service-oriented architecture for maintainability and extensibility.
+The Document Assembly Tool is a client-side web application built with modern web technologies. It follows a modular service-oriented architecture for maintainability and extensibility.
 
 ### Core Technologies
 
 - **Frontend**: TypeScript, Vite, Tailwind CSS
 - **Document Processing**: docxtemplater, PizZip
-- **Survey Engine**: Survey.js (Creator & Core)
+- **Survey Engine**: Survey.js Core
 - **File Handling**: FileSaver.js, HTML5 File API
 - **Build System**: Vite with TypeScript compilation
 
@@ -750,4 +750,4 @@ class UsageAnalytics {
 
 ---
 
-*This technical documentation covers the Phase 2 MVP implementation architecture, APIs, and deployment considerations. For user-facing instructions, see the User Guide.*
+*For user-facing instructions, see [USER-GUIDE.md](USER-GUIDE.md).*

@@ -1,4 +1,7 @@
 import { FieldMappingService } from '@/services/fieldMapping';
+import { SurveyCreatorService } from '@/services/surveyCreator';
+import type { DocxPlaceholder } from '@/services/docxParser';
+import { TemplateManagerComponent } from './TemplateManagerComponent';
 import { showNotification, getTypeColor } from './uiUtils';
 
 /**
@@ -7,9 +10,17 @@ import { showNotification, getTypeColor } from './uiUtils';
  */
 export class MappingInterfaceComponent {
   private mappingService: FieldMappingService;
+  private surveyCreatorService: SurveyCreatorService;
+  private templateManagerComponent: TemplateManagerComponent;
 
-  constructor(mappingService: FieldMappingService) {
+  constructor(
+    mappingService: FieldMappingService,
+    surveyCreatorService: SurveyCreatorService,
+    templateManagerComponent: TemplateManagerComponent
+  ) {
     this.mappingService = mappingService;
+    this.surveyCreatorService = surveyCreatorService;
+    this.templateManagerComponent = templateManagerComponent;
   }
 
   public render(container: HTMLElement): void {
@@ -258,35 +269,33 @@ export class MappingInterfaceComponent {
 
   private async loadMappingData(container: HTMLElement): Promise<void> {
     try {
-      // Get survey fields from Survey Creator (mock for now)
-      const mockSurveyFields = [
-        'employee_name', 'company_name', 'job_title', 'start_date', 
-        'department', 'manager_name', 'employment_type', 'annual_salary', 
-        'pay_frequency', 'hourly_rate', 'weekly_hours', 'has_benefits',
-        'has_health_insurance', 'response_deadline', 'hr_manager_name',
-        'office_address', 'working_hours', 'is_remote', 'is_salary_based'
-      ];
+      // Get survey fields from Survey Creator service
+      const surveyFields = this.surveyCreatorService.getSurveyFields();
+      
+      // Get template placeholders from Template Manager component
+      const parseResult = this.templateManagerComponent.getParseResult();
+      const placeholders = parseResult?.placeholders ?? [];
 
-      // Get template placeholders (this would come from uploaded DOCX analysis)
-      const mockPlaceholders = [
-        { name: 'employee_name', type: 'simple' as const, isRequired: true, fullMatch: '{{employee_name}}', context: 'Dear {{employee_name}}' },
-        { name: 'company_name', type: 'simple' as const, isRequired: true, fullMatch: '{{company_name}}', context: 'employment with {{company_name}} in' },
-        { name: 'job_title', type: 'simple' as const, isRequired: true, fullMatch: '{{job_title}}', context: 'position of {{job_title}}' },
-        { name: 'start_date', type: 'simple' as const, isRequired: true, fullMatch: '{{start_date}}', context: 'Start Date: {{start_date}}' },
-        { name: 'department', type: 'simple' as const, isRequired: true, fullMatch: '{{department}}', context: 'Department: {{department}}' },
-        { name: 'is_salary_based', type: 'conditional' as const, isRequired: false, fullMatch: '{{#is_salary_based}}', context: 'conditional salary section' },
-        { name: 'annual_salary', type: 'simple' as const, isRequired: false, fullMatch: '{{annual_salary}}', context: 'Annual Salary: ${{annual_salary}}' },
-        { name: 'hourly_rate', type: 'simple' as const, isRequired: false, fullMatch: '{{hourly_rate}}', context: 'Hourly Rate: ${{hourly_rate}}' },
-        { name: 'has_benefits', type: 'conditional' as const, isRequired: false, fullMatch: '{{#has_benefits}}', context: 'benefits section' },
-        { name: 'benefit_list', type: 'loop' as const, isRequired: false, fullMatch: '{{#benefit_list}}', context: 'list of benefits' }
-      ];
+      // Validate that we have data to work with
+      if (surveyFields.length === 0 && placeholders.length === 0) {
+        showNotification('No survey fields or template placeholders found. Please create a survey and upload a template first.', 'warning');
+        return;
+      }
 
-      // Initialize mapping service
-      this.mappingService.initialize(mockSurveyFields, mockPlaceholders);
+      if (surveyFields.length === 0) {
+        showNotification('No survey fields found. Please create questions in the Survey Designer tab first.', 'warning');
+      }
+
+      if (placeholders.length === 0) {
+        showNotification('No template placeholders found. Please upload a DOCX template in the Template Manager tab first.', 'warning');
+      }
+
+      // Initialize mapping service with real data
+      this.mappingService.initialize(surveyFields, placeholders);
 
       // Update UI
       this.showMappingInterface(container);
-      this.populateMappingData(container, mockSurveyFields, mockPlaceholders);
+      this.populateMappingData(container, surveyFields, placeholders);
       this.updateMappingStatus(container, true);
       
       // Enable buttons
@@ -300,7 +309,8 @@ export class MappingInterfaceComponent {
       exportBtn.disabled = false;
       validateBtn.disabled = false;
 
-      showNotification('Survey and template data loaded successfully', 'success');
+      const message = `Loaded ${surveyFields.length} survey fields and ${placeholders.length} template placeholders`;
+      showNotification(message, 'success');
 
     } catch (error) {
       console.error('Error loading mapping data:', error);
@@ -316,7 +326,7 @@ export class MappingInterfaceComponent {
     mappingInterface.classList.remove('hidden');
   }
 
-  private populateMappingData(container: HTMLElement, surveyFields: string[], placeholders: any[]): void {
+  private populateMappingData(container: HTMLElement, surveyFields: string[], placeholders: DocxPlaceholder[]): void {
     const surveyFieldsList = container.querySelector('#survey-fields-list')!;
     const placeholdersList = container.querySelector('#placeholders-list')!;
 

@@ -6,6 +6,15 @@ import { getTypeColor } from './uiUtils';
  * Handles template documentation, DOCX upload, and template analysis
  */
 export class TemplateManagerComponent {
+  private currentParseResult: DocxParseResult | null = null;
+
+  /**
+   * Get the current parse result from the most recently analyzed template
+   */
+  public getParseResult(): DocxParseResult | null {
+    return this.currentParseResult;
+  }
+
   public render(container: HTMLElement): void {
     container.innerHTML = `
       <div class="bg-white shadow rounded-lg">
@@ -498,8 +507,6 @@ ${'{{'}/job_duties${'}}'}</pre>
     const validateBtn = container.querySelector('#validate-with-survey') as HTMLButtonElement;
     const exportBtn = container.querySelector('#export-placeholders') as HTMLButtonElement;
 
-    let currentParseResult: DocxParseResult | null = null;
-
     // Handle file input change
     const handleFileUpload = async (file: File) => {
       if (!file) return;
@@ -518,7 +525,7 @@ ${'{{'}/job_duties${'}}'}</pre>
 
         // Parse the DOCX file
         const parseResult = await DocxParserService.parseDocx(file);
-        currentParseResult = parseResult;
+        this.currentParseResult = parseResult;
 
         // Reset upload area
         this.resetUploadArea(uploadArea, fileInput);
@@ -576,7 +583,7 @@ ${'{{'}/job_duties${'}}'}</pre>
 
     // Clear analysis handler
     clearBtn.addEventListener('click', () => {
-      currentParseResult = null;
+      this.currentParseResult = null;
       resultsArea.classList.add('hidden');
       validateBtn.disabled = true;
       exportBtn.disabled = true;
@@ -585,15 +592,15 @@ ${'{{'}/job_duties${'}}'}</pre>
 
     // Validate with survey handler
     validateBtn.addEventListener('click', () => {
-      if (currentParseResult) {
-        this.validateWithSurvey(container, currentParseResult);
+      if (this.currentParseResult) {
+        this.validateWithSurvey(container, this.currentParseResult);
       }
     });
 
     // Export placeholders handler
     exportBtn.addEventListener('click', () => {
-      if (currentParseResult) {
-        this.exportPlaceholders(currentParseResult);
+      if (this.currentParseResult) {
+        this.exportPlaceholders(this.currentParseResult);
       }
     });
   }

@@ -808,7 +808,7 @@ ${'{{'}/job_duties${'}}'}</pre>
       const placeholderList = parseResult.placeholders.map(p => `
         <div class="bg-white border border-gray-200 rounded p-2">
           <div class="flex justify-between items-start">
-            <span class="font-mono text-sm text-gray-900">${p.fullMatch}</span>
+            <span class="font-mono text-sm text-gray-900">${p.displayMatch || p.fullMatch}</span>
             <span class="text-xs px-2 py-1 rounded ${getTypeColor(p.type)}">${p.type}</span>
           </div>
           ${p.context ? `<p class="text-xs text-gray-600 mt-1">${p.context}</p>` : ''}

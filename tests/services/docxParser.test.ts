@@ -117,3 +117,85 @@ describe('DocxParserService with Real Template', () => {
     });
   });
 });
+
+describe('DocxParserService.truncateComplexMatch', () => {
+  describe('regular conditional fields (#)', () => {
+    test('should not truncate short content', () => {
+      const fullMatch = '{{#foo}}Short text{{/foo}}';
+      const result = DocxParserService.truncateComplexMatch(fullMatch, 'foo', '#');
+      expect(result).toBe(fullMatch);
+    });
+
+    test('should truncate long content with ellipsis', () => {
+      const longContent = 'This is a very long piece of content that should definitely be truncated because it exceeds the maximum length';
+      const fullMatch = `{{#foo}}${longContent}{{/foo}}`;
+      const result = DocxParserService.truncateComplexMatch(fullMatch, 'foo', '#');
+      
+      expect(result).toContain('{{#foo}}');
+      expect(result).toContain('{{/foo}}');
+      expect(result).toContain('...');
+      expect(result.length).toBeLessThan(fullMatch.length);
+    });
+
+    test('should preserve start and end of content', () => {
+      const content = 'START_CONTENT_HERE some middle text that goes on for a while END_CONTENT_HERE';
+      const fullMatch = `{{#field}}${content}{{/field}}`;
+      const result = DocxParserService.truncateComplexMatch(fullMatch, 'field', '#');
+      
+      expect(result).toContain('START_CONTENT');
+      expect(result).toContain('CONTENT_HERE');
+    });
+  });
+
+  describe('inverted conditional fields (^)', () => {
+    test('should not truncate short content', () => {
+      const fullMatch = '{{^bar}}Brief{{/bar}}';
+      const result = DocxParserService.truncateComplexMatch(fullMatch, 'bar', '^');
+      expect(result).toBe(fullMatch);
+    });
+
+    test('should truncate long content with ellipsis', () => {
+      const longContent = 'This is another very long piece of content that should be truncated because it is way too long for display';
+      const fullMatch = `{{^bar}}${longContent}{{/bar}}`;
+      const result = DocxParserService.truncateComplexMatch(fullMatch, 'bar', '^');
+      
+      expect(result).toContain('{{^bar}}');
+      expect(result).toContain('{{/bar}}');
+      expect(result).toContain('...');
+      expect(result.length).toBeLessThan(fullMatch.length);
+    });
+  });
+
+  describe('edge cases', () => {
+    test('should return original if structure is invalid', () => {
+      const invalid = 'Just some text without proper tags';
+      const result = DocxParserService.truncateComplexMatch(invalid, 'field', '#');
+      expect(result).toBe(invalid);
+    });
+
+    test('should handle empty content', () => {
+      const fullMatch = '{{#empty}}{{/empty}}';
+      const result = DocxParserService.truncateComplexMatch(fullMatch, 'empty', '#');
+      expect(result).toBe(fullMatch);
+    });
+
+    test('should handle content exactly at boundary length', () => {
+      // Content at MAX_COMPLEX_CONTENT_LENGTH should not be truncated
+      const maxLen = DocxParserService.MAX_COMPLEX_CONTENT_LENGTH;
+      const content = 'x'.repeat(maxLen);
+      const fullMatch = `{{#field}}${content}{{/field}}`;
+      const result = DocxParserService.truncateComplexMatch(fullMatch, 'field', '#');
+      expect(result).toBe(fullMatch);
+    });
+
+    test('should handle content just over boundary length', () => {
+      // Content over MAX_COMPLEX_CONTENT_LENGTH should be truncated
+      const maxLen = DocxParserService.MAX_COMPLEX_CONTENT_LENGTH;
+      const content = 'x'.repeat(maxLen + 1);
+      const fullMatch = `{{#field}}${content}{{/field}}`;
+      const result = DocxParserService.truncateComplexMatch(fullMatch, 'field', '#');
+      expect(result).toContain('...');
+      expect(result.length).toBeLessThan(fullMatch.length);
+    });
+  });
+});

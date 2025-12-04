@@ -7,6 +7,7 @@ export interface DocxPlaceholder {
   name: string;
   type: 'simple' | 'conditional' | 'loop';
   fullMatch: string;
+  displayMatch?: string; // truncated version for complex fields
   isRequired?: boolean;
   context?: string; // surrounding text for context
 }
@@ -30,6 +31,13 @@ export class DocxParserService {
   private static readonly PLACEHOLDER_REGEX = /\{\{([^}]+)\}\}/g;
   private static readonly CONDITIONAL_REGEX = /\{\{#([^}]+)\}\}(.*?)\{\{\/\1\}\}/gs;
   private static readonly INVERTED_CONDITIONAL_REGEX = /\{\{\^([^}]+)\}\}(.*?)\{\{\/\1\}\}/gs;
+
+  /** Maximum content length before truncation is applied for complex fields */
+  static readonly MAX_COMPLEX_CONTENT_LENGTH = 40;
+  /** Number of characters to show from the start of truncated content */
+  static readonly TRUNCATE_START_LENGTH = 15;
+  /** Number of characters to show from the end of truncated content */
+  static readonly TRUNCATE_END_LENGTH = 15;
 
   /**
    * Parse a DOCX file and extract placeholders
@@ -153,11 +161,13 @@ export class DocxParserService {
       
       if (!found.has(fieldName)) {
         const context = this.getContext(textContent, match.index, match[0].length);
+        const displayMatch = this.truncateComplexMatch(match[0], fieldName, '#');
         
         placeholders.push({
           name: fieldName,
           type: this.isLoopField(content) ? 'loop' : 'conditional',
           fullMatch: match[0],
+          displayMatch: displayMatch,
           context: context,
           isRequired: false
         });
@@ -173,11 +183,13 @@ export class DocxParserService {
       
       if (!found.has(fieldName)) {
         const context = this.getContext(textContent, match.index, match[0].length);
+        const displayMatch = this.truncateComplexMatch(match[0], fieldName, '^');
         
         placeholders.push({
           name: fieldName,
           type: 'conditional',
           fullMatch: match[0],
+          displayMatch: displayMatch,
           context: context,
           isRequired: false
         });
@@ -255,6 +267,49 @@ export class DocxParserService {
     if (end < text.length) context = context + '...';
     
     return context;
+  }
+
+  /**
+   * Truncate a complex field match for display purposes.
+   * 
+   * For long content inside conditional/loop fields, this creates a truncated
+   * display string showing the beginning and end of the content with ellipsis.
+   * 
+   * @param fullMatch - The complete match string (e.g., "{{#foo}}long content here{{/foo}}")
+   * @param fieldName - The field name without prefix/suffix (e.g., "foo")
+   * @param prefix - The tag prefix character ('#' for conditionals, '^' for inverted)
+   * @returns Truncated string like "{{#foo}}Some trunc ... long text.{{/foo}}"
+   * 
+   * @example
+   * truncateComplexMatch("{{#benefits}}Your benefits package...{{/benefits}}", "benefits", "#")
+   * // Returns: "{{#benefits}}Your benefits p ... package...{{/benefits}}"
+   */
+  static truncateComplexMatch(
+    fullMatch: string,
+    fieldName: string,
+    prefix: '#' | '^'
+  ): string {
+    const openTag = `{{${prefix}${fieldName}}}`;
+    const closeTag = `{{/${fieldName}}}`;
+
+    // Check if fullMatch has the expected structure
+    if (!fullMatch.startsWith(openTag) || !fullMatch.endsWith(closeTag)) {
+      return fullMatch;
+    }
+
+    // Extract the content between opening and closing tags
+    const content = fullMatch.slice(openTag.length, -closeTag.length);
+
+    // If content is short enough, no truncation needed
+    if (content.length <= this.MAX_COMPLEX_CONTENT_LENGTH) {
+      return fullMatch;
+    }
+
+    // Truncate content: show beginning ... ending
+    const startContent = content.slice(0, this.TRUNCATE_START_LENGTH).trim();
+    const endContent = content.slice(-this.TRUNCATE_END_LENGTH).trim();
+
+    return `${openTag}${startContent} ... ${endContent}${closeTag}`;
   }
 
   /**

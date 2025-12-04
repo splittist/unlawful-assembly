@@ -197,6 +197,12 @@ describe('MarkdownParser', () => {
           MarkdownParser.toMarkdown('<ul><li>Item 1</li><li>Item 2</li></ul>')
         ).toBe('- Item 1\n- Item 2');
       });
+
+      test('should convert ol/li to numbered markdown list', () => {
+        expect(
+          MarkdownParser.toMarkdown('<ol><li>First</li><li>Second</li></ol>')
+        ).toBe('1. First\n2. Second');
+      });
     });
 
     describe('blockquotes', () => {

@@ -30,7 +30,10 @@ export class MarkdownParser {
 
     const flushList = () => {
       if (inList && listItems.length > 0) {
-        blocks.push(`<${listType}>${listItems.map((item) => `<li>${this.processInline(item)}</li>`).join('')}</${listType}>`);
+        const listItemsHtml = listItems
+          .map((item) => `<li>${this.processInline(item)}</li>`)
+          .join('');
+        blocks.push(`<${listType}>${listItemsHtml}</${listType}>`);
         listItems = [];
         inList = false;
         listType = '';
@@ -128,35 +131,46 @@ export class MarkdownParser {
   static toMarkdown(html: string): string {
     if (!html) return '';
 
-    return (
-      html
-        // Headers - add newline after closing tag
-        .replace(/<h([1-6])>(.*?)<\/h\1>/g, (_, level, text) => '#'.repeat(parseInt(level)) + ' ' + text + '\n')
+    let result = html;
 
-        // Lists - add newlines around list tags
-        .replace(/<ul>/g, '')
-        .replace(/<\/ul>/g, '\n')
-        .replace(/<ol>/g, '')
-        .replace(/<\/ol>/g, '\n')
-        .replace(/<li>(.*?)<\/li>/g, '- $1\n')
-
-        // Blockquotes - add newline after
-        .replace(/<blockquote>(.*?)<\/blockquote>/g, '> $1\n')
-
-        // Bold and italic (support both semantic and presentational tags)
-        .replace(/<strong>(.*?)<\/strong>/g, '**$1**')
-        .replace(/<b>(.*?)<\/b>/g, '**$1**')
-        .replace(/<em>(.*?)<\/em>/g, '*$1*')
-        .replace(/<i>(.*?)<\/i>/g, '*$1*')
-
-        // Paragraphs and breaks
-        .replace(/<p>/g, '')
-        .replace(/<\/p>/g, '\n\n')
-        .replace(/<br\s*\/?>/g, '\n')
-
-        // Clean up extra whitespace
-        .replace(/\n{3,}/g, '\n\n')
-        .trim()
+    // Headers - add newline after closing tag
+    result = result.replace(
+      /<h([1-6])>(.*?)<\/h\1>/g,
+      (_, level, text) => '#'.repeat(parseInt(level)) + ' ' + text + '\n'
     );
+
+    // Ordered lists - convert to numbered format
+    result = result.replace(/<ol>(.*?)<\/ol>/gs, (_, content) => {
+      let index = 1;
+      const listItems = content.replace(/<li>(.*?)<\/li>/g, (_: string, item: string) => {
+        return `${index++}. ${item}\n`;
+      });
+      return listItems + '\n';
+    });
+
+    // Unordered lists - convert to dash format
+    result = result.replace(/<ul>(.*?)<\/ul>/gs, (_, content) => {
+      const listItems = content.replace(/<li>(.*?)<\/li>/g, '- $1\n');
+      return listItems + '\n';
+    });
+
+    // Blockquotes - add newline after
+    result = result.replace(/<blockquote>(.*?)<\/blockquote>/g, '> $1\n');
+
+    // Bold and italic (support both semantic and presentational tags)
+    result = result.replace(/<strong>(.*?)<\/strong>/g, '**$1**');
+    result = result.replace(/<b>(.*?)<\/b>/g, '**$1**');
+    result = result.replace(/<em>(.*?)<\/em>/g, '*$1*');
+    result = result.replace(/<i>(.*?)<\/i>/g, '*$1*');
+
+    // Paragraphs and breaks
+    result = result.replace(/<p>/g, '');
+    result = result.replace(/<\/p>/g, '\n\n');
+    result = result.replace(/<br\s*\/?>/g, '\n');
+
+    // Clean up extra whitespace
+    result = result.replace(/\n{3,}/g, '\n\n');
+
+    return result.trim();
   }
 }

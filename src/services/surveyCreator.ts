@@ -260,6 +260,25 @@ export class SurveyCreatorService {
         console.error('Error updating page title:', error);
       }
     };
+
+    (window as any).moveQuestion = (index: number, direction: 'up' | 'down') => {
+      try {
+        this.moveQuestion(index, direction);
+        this.refreshDesignerArea();
+      } catch (error) {
+        console.error('Error moving question:', error);
+      }
+    };
+
+    (window as any).movePage = (pageIndex: number, direction: 'up' | 'down') => {
+      try {
+        this.movePage(pageIndex, direction);
+        this.refreshDesignerArea();
+        this.renderPageList();
+      } catch (error) {
+        console.error('Error moving page:', error);
+      }
+    };
   }
 
   /**
@@ -422,13 +441,34 @@ export class SurveyCreatorService {
     const isSelected = this.selectedElement.type === 'element' && this.selectedElement.elementName === question.name;
     const selectedClass = isSelected ? 'border-blue-500 bg-blue-50' : 'border-gray-200 bg-white';
     
+    // Get total count of questions on current page
+    const survey = this.getSurveyJson();
+    const currentPage = survey.pages?.[this.currentPageIndex];
+    const totalQuestions = currentPage?.elements?.length || 0;
+    const canMoveUp = index > 0;
+    const canMoveDown = index < totalQuestions - 1;
+    
     return `
       <div class="border ${selectedClass} rounded-lg p-4 cursor-pointer hover:border-blue-300 transition-colors" 
            onclick="selectElement('${question.name}')"
            data-element-name="${question.name}">
         <div class="flex justify-between items-center mb-3">
           <span class="text-sm font-medium text-gray-500">${typeLabels[question.type] || question.type}</span>
-          <button class="text-red-600 hover:text-red-800 text-sm" onclick="event.stopPropagation(); removeQuestion(${index})">Remove</button>
+          <div class="flex items-center space-x-2">
+            <button 
+              class="text-gray-${canMoveUp ? '600 hover:text-gray-800' : '300 cursor-not-allowed'} text-sm px-1" 
+              onclick="event.stopPropagation(); ${canMoveUp ? `moveQuestion(${index}, 'up')` : ''}"
+              title="Move up"
+              ${canMoveUp ? '' : 'disabled'}
+            >↑</button>
+            <button 
+              class="text-gray-${canMoveDown ? '600 hover:text-gray-800' : '300 cursor-not-allowed'} text-sm px-1" 
+              onclick="event.stopPropagation(); ${canMoveDown ? `moveQuestion(${index}, 'down')` : ''}"
+              title="Move down"
+              ${canMoveDown ? '' : 'disabled'}
+            >↓</button>
+            <button class="text-red-600 hover:text-red-800 text-sm" onclick="event.stopPropagation(); removeQuestion(${index})">Remove</button>
+          </div>
         </div>
         <div class="space-y-3">
           <input 
@@ -475,15 +515,30 @@ export class SurveyCreatorService {
     pageListContainer.innerHTML = pages.map((page, index) => {
       const isActive = index === this.currentPageIndex;
       const pageTitle = page.title || page.name;
+      const canMoveUp = index > 0;
+      const canMoveDown = index < pages.length - 1;
       return `
         <div class="flex items-center space-x-1 ${isActive ? 'bg-blue-50 border-blue-300' : 'bg-white border-gray-300'} border rounded px-2 py-1">
           <button 
-            class="flex-1 text-left text-sm ${isActive ? 'font-medium text-blue-700' : 'text-gray-700'} hover:text-blue-600"
+            class="flex-1 text-left text-sm ${isActive ? 'font-medium text-blue-700' : 'text-gray-700'} hover:text-blue-600 truncate"
             onclick="selectPage(${index})"
+            title="${this.escapeHtml(pageTitle)}"
           >
-            ${pageTitle}
+            ${this.escapeHtml(pageTitle)}
           </button>
           ${pages.length > 1 ? `
+            <button 
+              class="text-gray-${canMoveUp ? '600 hover:text-gray-800' : '300 cursor-not-allowed'} text-xs px-0.5"
+              onclick="event.stopPropagation(); ${canMoveUp ? `movePage(${index}, 'up')` : ''}"
+              title="Move page up"
+              ${canMoveUp ? '' : 'disabled'}
+            >↑</button>
+            <button 
+              class="text-gray-${canMoveDown ? '600 hover:text-gray-800' : '300 cursor-not-allowed'} text-xs px-0.5"
+              onclick="event.stopPropagation(); ${canMoveDown ? `movePage(${index}, 'down')` : ''}"
+              title="Move page down"
+              ${canMoveDown ? '' : 'disabled'}
+            >↓</button>
             <button 
               class="text-red-500 hover:text-red-700 text-xs"
               onclick="deletePage(${index})"
@@ -801,6 +856,66 @@ export class SurveyCreatorService {
     const savedPageIndex = this.currentPageIndex;
     this.loadSurvey(survey);
     this.currentPageIndex = savedPageIndex;
+  }
+
+  /**
+   * Move a question within the current page
+   * @param questionIndex - The index of the question to move
+   * @param direction - 'up' to move the question earlier, 'down' to move it later
+   */
+  moveQuestion(questionIndex: number, direction: 'up' | 'down'): void {
+    const survey = this.getSurveyJson();
+    const currentPage = survey.pages?.[this.currentPageIndex];
+    
+    if (!currentPage?.elements) {
+      throw new Error('No elements on current page');
+    }
+    
+    const elements = currentPage.elements;
+    const newIndex = direction === 'up' ? questionIndex - 1 : questionIndex + 1;
+    
+    if (newIndex < 0 || newIndex >= elements.length) {
+      throw new Error('Cannot move question in that direction');
+    }
+    
+    // Swap the elements
+    [elements[questionIndex], elements[newIndex]] = [elements[newIndex], elements[questionIndex]];
+    
+    const savedPageIndex = this.currentPageIndex;
+    this.loadSurvey(survey);
+    this.currentPageIndex = savedPageIndex;
+  }
+
+  /**
+   * Move a page within the survey
+   * @param pageIndex - The index of the page to move
+   * @param direction - 'up' to move the page earlier, 'down' to move it later
+   */
+  movePage(pageIndex: number, direction: 'up' | 'down'): void {
+    const survey = this.getSurveyJson();
+    
+    if (!survey.pages) {
+      throw new Error('No pages in survey');
+    }
+    
+    const pages = survey.pages;
+    const newIndex = direction === 'up' ? pageIndex - 1 : pageIndex + 1;
+    
+    if (newIndex < 0 || newIndex >= pages.length) {
+      throw new Error('Cannot move page in that direction');
+    }
+    
+    // Swap the pages
+    [pages[pageIndex], pages[newIndex]] = [pages[newIndex], pages[pageIndex]];
+    
+    // Update current page index if we're moving the currently selected page
+    if (this.currentPageIndex === pageIndex) {
+      this.currentPageIndex = newIndex;
+    } else if (this.currentPageIndex === newIndex) {
+      this.currentPageIndex = pageIndex;
+    }
+    
+    this.loadSurvey(survey);
   }
 
   /**

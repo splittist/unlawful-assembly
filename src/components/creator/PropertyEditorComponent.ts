@@ -12,6 +12,7 @@ export class PropertyEditorComponent {
   private surveyCreatorService: SurveyCreatorService;
   private container: HTMLElement | null = null;
   private currentSelection: PropertyEditorSelection = { type: null };
+  private shouldPreserveScroll: boolean = false;
 
   // Sub-editors
   private surveyPropertyEditor: SurveyPropertyEditor;
@@ -24,14 +25,16 @@ export class PropertyEditorComponent {
     this.pagePropertyEditor = new PagePropertyEditor(surveyCreatorService);
     this.elementPropertyEditor = new ElementPropertyEditor(surveyCreatorService);
 
-    // Listen to selection changes
+    // Listen to selection changes - scroll to top when selection changes
     this.surveyCreatorService.onSelectionChange((selection) => {
       this.currentSelection = selection;
+      this.shouldPreserveScroll = false;
       this.render();
     });
 
-    // Listen to property updates
+    // Listen to property updates - preserve scroll position for same element
     this.surveyCreatorService.onPropertyUpdate(() => {
+      this.shouldPreserveScroll = true;
       this.render();
     });
   }
@@ -50,9 +53,9 @@ export class PropertyEditorComponent {
   render(): void {
     if (!this.container) return;
 
-    // Save scroll position before re-rendering
+    // Save scroll position before re-rendering (only if preserving scroll)
     const contentArea = this.container.querySelector('#property-editor-content');
-    const scrollTop = contentArea?.scrollTop || 0;
+    const scrollTop = this.shouldPreserveScroll ? (contentArea?.scrollTop || 0) : 0;
 
     this.container.innerHTML = `
       <div class="h-full flex flex-col bg-white border-l border-gray-200">
@@ -68,8 +71,7 @@ export class PropertyEditorComponent {
     // Set up event handlers after rendering
     this.setupEvents();
 
-    // Restore scroll position after re-rendering
-    // Use requestAnimationFrame to ensure DOM is fully rendered
+    // Restore scroll position after re-rendering (only if preserving scroll)
     const newContentArea = this.container.querySelector('#property-editor-content');
     if (newContentArea && scrollTop > 0) {
       requestAnimationFrame(() => {

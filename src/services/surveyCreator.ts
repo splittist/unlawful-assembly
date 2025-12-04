@@ -334,11 +334,28 @@ export class SurveyCreatorService {
     if (!designerArea) return;
     
     const survey = this.getSurveyJson();
+    
+    // Survey header is always shown to allow editing survey-level properties
+    const isSurveySelected = this.selectedElement.type === 'survey';
+    const surveyHeaderClass = isSurveySelected ? 'bg-blue-50 border-blue-300' : 'bg-gray-100 border-transparent';
+    const surveyHeaderHtml = `
+      <div class="mb-4 p-3 border-2 ${surveyHeaderClass} rounded-lg cursor-pointer hover:border-blue-200 transition-colors" onclick="selectSurvey()">
+        <div class="flex items-center">
+          <span class="text-gray-500 mr-2">📋</span>
+          <h3 class="text-lg font-semibold text-gray-900">${this.escapeHtml(survey.title || 'Untitled Survey')}</h3>
+        </div>
+        ${survey.description ? `<p class="text-sm text-gray-600 mt-1 ml-6">${this.escapeHtml(survey.description)}</p>` : '<p class="text-xs text-gray-400 mt-1 ml-6">Click to edit survey name and description</p>'}
+      </div>
+    `;
+    
     if (!survey.pages || survey.pages.length === 0) {
       designerArea.innerHTML = `
-        <div class="text-center text-gray-500 mt-20 cursor-pointer" onclick="selectSurvey()">
-          <p>No pages in survey</p>
-          <p class="text-sm mt-2">Add a page to get started</p>
+        <div class="space-y-4">
+          ${surveyHeaderHtml}
+          <div class="text-center text-gray-500 mt-20">
+            <p>No pages in survey</p>
+            <p class="text-sm mt-2">Add a page to get started</p>
+          </div>
         </div>
       `;
       return;
@@ -353,11 +370,12 @@ export class SurveyCreatorService {
     if (questions.length === 0) {
       designerArea.innerHTML = `
         <div class="space-y-4">
+          ${surveyHeaderHtml}
           <div class="mb-6 p-3 border-2 ${pageHeaderClass} rounded-lg cursor-pointer hover:border-blue-200 transition-colors" onclick="selectPageHeader(${this.currentPageIndex})">
-            <h3 class="text-lg font-medium text-gray-900 mb-2">${currentPage.title || currentPage.name}</h3>
-            ${currentPage.description ? `<p class="text-gray-600">${currentPage.description}</p>` : ''}
+            <h3 class="text-lg font-medium text-gray-900 mb-2">${this.escapeHtml(currentPage.title || currentPage.name)}</h3>
+            ${currentPage.description ? `<p class="text-gray-600">${this.escapeHtml(currentPage.description)}</p>` : ''}
           </div>
-          <div class="text-center text-gray-500 mt-20 cursor-pointer" onclick="selectSurvey()">
+          <div class="text-center text-gray-500 mt-20">
             <p>No questions on this page</p>
             <p class="text-sm mt-2">Add questions using the buttons on the left</p>
           </div>
@@ -368,13 +386,23 @@ export class SurveyCreatorService {
     
     designerArea.innerHTML = `
       <div class="space-y-4">
+        ${surveyHeaderHtml}
         <div class="mb-6 p-3 border-2 ${pageHeaderClass} rounded-lg cursor-pointer hover:border-blue-200 transition-colors" onclick="selectPageHeader(${this.currentPageIndex})">
-          <h3 class="text-lg font-medium text-gray-900 mb-2">${currentPage.title || currentPage.name}</h3>
-          ${currentPage.description ? `<p class="text-gray-600">${currentPage.description}</p>` : ''}
+          <h3 class="text-lg font-medium text-gray-900 mb-2">${this.escapeHtml(currentPage.title || currentPage.name)}</h3>
+          ${currentPage.description ? `<p class="text-gray-600">${this.escapeHtml(currentPage.description)}</p>` : ''}
         </div>
         ${questions.map((q: any, index: number) => this.renderQuestionEditor(q, index)).join('')}
       </div>
     `;
+  }
+
+  /**
+   * Escape HTML to prevent XSS
+   */
+  private escapeHtml(text: string): string {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
   }
 
   /**
@@ -872,12 +900,25 @@ export class SurveyCreatorService {
     }
 
     const savedPageIndex = this.currentPageIndex;
-    const savedSelection = { ...this.selectedElement };
+    let savedSelection = { ...this.selectedElement };
+    
+    // If the name property was changed, update the selection to use the new name
+    const nameWasChanged = property === 'name' && savedSelection.type === 'element' && savedSelection.elementName === elementName;
+    if (nameWasChanged) {
+      savedSelection = { ...savedSelection, elementName: value as string };
+    }
+    
     this.loadSurvey(survey);
     this.currentPageIndex = savedPageIndex;
     this.selectedElement = savedSelection;
     this.refreshDesignerArea();
-    this.notifyPropertyUpdate();
+    
+    // When name is changed, notify as selection change so the property editor updates with new name
+    if (nameWasChanged) {
+      this.notifySelectionChange();
+    } else {
+      this.notifyPropertyUpdate();
+    }
   }
 
   /**

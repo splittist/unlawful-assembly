@@ -253,9 +253,9 @@ export class DocumentGeneratorService {
       return value.length > 0 ? value.join(', ') : '';
     }
 
-    // Handle boolean values
+    // Handle boolean values - pass through as-is for conditional logic in templates
     if (typeof value === 'boolean') {
-      return value ? 'Yes' : 'No';
+      return value;
     }
 
     // Handle date values

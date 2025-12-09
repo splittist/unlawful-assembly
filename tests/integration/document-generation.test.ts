@@ -173,7 +173,7 @@ describe('DocumentGeneratorService Integration Tests', () => {
       expect(vi.mocked(await import('file-saver')).saveAs).toHaveBeenCalledOnce();
     });
 
-    test('should transform boolean values to Yes/No strings', async () => {
+    test('should keep boolean values as booleans for template conditionals', async () => {
       // Given: Survey responses with boolean values
       const responsesWithBooleans = {
         ...fullSurveyResponses,
@@ -363,6 +363,67 @@ describe('DocumentGeneratorService Integration Tests', () => {
           mockPackageContent
         )
       ).resolves.not.toThrow();
+    });
+
+    test('should preserve boolean values as true/false for template conditionals', async () => {
+      // Given: Survey responses with specific boolean values
+      const responsesWithBooleans = {
+        employee_name: 'John Doe',
+        is_full_time: true,
+        has_car_allowance: false,
+        requires_travel: true
+      };
+
+      // And: Mock mappings that include boolean fields
+      const mappingsWithBooleans = [
+        {
+          id: '1',
+          surveyField: 'employee_name',
+          placeholder: '{employee_name}',
+          placeholderType: 'simple' as const,
+          isRequired: true,
+          isValid: true
+        },
+        {
+          id: '2',
+          surveyField: 'is_full_time',
+          placeholder: '{is_full_time}',
+          placeholderType: 'simple' as const,
+          isRequired: false,
+          isValid: true
+        },
+        {
+          id: '3',
+          surveyField: 'has_car_allowance',
+          placeholder: '{has_car_allowance}',
+          placeholderType: 'simple' as const,
+          isRequired: false,
+          isValid: true
+        },
+        {
+          id: '4',
+          surveyField: 'requires_travel',
+          placeholder: '{requires_travel}',
+          placeholderType: 'simple' as const,
+          isRequired: false,
+          isValid: true
+        }
+      ];
+
+      // When: Transform responses to template data
+      const templateData = DocumentGeneratorService.getTemplateDataPreview(
+        responsesWithBooleans,
+        mappingsWithBooleans
+      );
+
+      // Then: Boolean values should remain as boolean true/false, not converted to strings
+      // This is important for template conditional logic (e.g., {#has_car_allowance}...{/has_car_allowance})
+      // If it were converted to 'Yes'/'No', both would be truthy and conditionals wouldn't work
+      expect(templateData.is_full_time).toBe(true);
+      expect(templateData.has_car_allowance).toBe(false);
+      expect(templateData.requires_travel).toBe(true);
+      // Also verify the string value is properly passed through
+      expect(templateData.employee_name).toBe('John Doe');
     });
   });
 

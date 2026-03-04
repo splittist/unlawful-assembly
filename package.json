@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
+    "build:sharepoint": "tsc && vite build --mode sharepoint",
+    "package:sharepoint": "npm run build:sharepoint && pwsh -NoProfile -ExecutionPolicy Bypass -File ./scripts/package-sharepoint.ps1",
     "preview": "vite preview",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives",
     "lint:fix": "eslint . --ext ts,tsx --fix",

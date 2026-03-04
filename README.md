@@ -61,16 +61,37 @@ npm run dev
 # Build for production
 npm run build
 
+# Build for SharePoint folder hosting (uses relative asset paths)
+npm run build:sharepoint
+
 # Preview production build
 npm run preview
 ```
 
 The application is client-side only and can be deployed to any static hosting service.
 
+### SharePoint Folder Deployment
+
+Use this when hosting from a SharePoint document library folder (not site root):
+
+1. Run `npm run build:sharepoint`
+2. Upload the full `dist/` contents to your SharePoint folder
+3. Open `index.html` for end users or `creator.html` for package creators
+
+`build:sharepoint` sets relative asset paths so JS/CSS files load correctly from nested SharePoint URLs.
+
+For a one-command upload package:
+
+1. Run `npm run package:sharepoint`
+2. Upload the generated `artifacts/sharepoint-dist-<timestamp>.zip` to SharePoint
+3. Extract the ZIP in your target folder, then open `index.html` or `creator.html`
+
 ## Available Scripts
 
 - `npm run dev` - Start development server
 - `npm run build` - Build for production
+- `npm run build:sharepoint` - Build with relative asset paths for SharePoint folders
+- `npm run package:sharepoint` - Build and create a ZIP package for SharePoint upload
 - `npm run preview` - Preview production build
 - `npm run lint` - Run ESLint
 - `npm run format` - Format code with Prettier

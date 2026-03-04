@@ -31,3 +31,6 @@ tests/fixtures/*-private.*
 
 # Coverage reports
 coverage/
+
+# SharePoint packaging output
+artifacts/

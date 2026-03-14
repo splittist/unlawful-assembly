@@ -1,0 +1,272 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://unlawful-assembly/docs/survey-schema.json",
+  "title": "Survey Definition",
+  "description": "Schema for survey definition files used by the document assembly application. Surveys are stored as JSON and rendered using Survey.js. Each survey drives a multi-page questionnaire whose answers are merged into a DOCX template to produce a finished document.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["pages"],
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "The survey title displayed at the top of the questionnaire. Should clearly describe the document being created, e.g. 'Employment Contract Information'."
+    },
+    "description": {
+      "type": "string",
+      "description": "A brief introductory paragraph shown below the title. Use this to explain the purpose of the survey and what the respondent will need to have to hand."
+    },
+    "logoPosition": {
+      "type": "string",
+      "enum": ["right", "left", "none"],
+      "default": "right",
+      "description": "Where to render any logo image. Typically left at the default 'right'."
+    },
+    "pages": {
+      "type": "array",
+      "description": "Ordered list of pages. Each page is shown as a separate screen. Group related questions together on the same page. At least one page is required.",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/definitions/page"
+      }
+    }
+  },
+  "definitions": {
+    "page": {
+      "type": "object",
+      "description": "A single screen in the survey. Contains one or more questions (elements). The user sees one page at a time and must click 'Next' to advance.",
+      "required": ["name", "elements"],
+      "additionalProperties": true,
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Unique identifier for this page. Use camelCase with no spaces, e.g. 'basicInfo', 'compensationDetails'. Used internally and for debugging — not shown to the user.",
+          "pattern": "^[a-zA-Z][a-zA-Z0-9_]*$"
+        },
+        "title": {
+          "type": "string",
+          "description": "Human-readable heading for this page, shown at the top of the screen, e.g. 'Basic Information'. If omitted, no heading is shown."
+        },
+        "description": {
+          "type": "string",
+          "description": "Optional explanatory text shown below the page title. Useful for instructions that apply to all questions on the page."
+        },
+        "visibleIf": {
+          "$ref": "#/definitions/visibleIfExpression",
+          "description": "Expression controlling whether this entire page is shown. If the expression evaluates to false, the page is skipped. See visibleIfExpression definition for syntax."
+        },
+        "elements": {
+          "type": "array",
+          "description": "The questions and content blocks on this page, shown in order.",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/definitions/element"
+          }
+        }
+      }
+    },
+    "element": {
+      "type": "object",
+      "description": "A single question or content block within a page. The 'type' property determines what kind of input is shown. Every question has a 'name' (its field identifier) and a 'title' (its label).",
+      "required": ["type", "name"],
+      "additionalProperties": true,
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "The kind of question or content block. Controls the input widget rendered to the user.",
+          "enum": ["text", "comment", "boolean", "radiogroup", "dropdown", "checkbox", "html"],
+          "enumDescriptions": {
+            "text": "Single-line text input. Use 'inputType' to constrain to date, number, email, etc.",
+            "comment": "Multi-line text area for longer free-form answers.",
+            "boolean": "A single Yes/No toggle. Stores true or false.",
+            "radiogroup": "Pick exactly one option from a list of radio buttons.",
+            "dropdown": "Pick exactly one option from a dropdown select list.",
+            "checkbox": "Pick any number of options from a list of checkboxes. Stores an array of selected values.",
+            "html": "Static read-only HTML content — not a question. Use for instructions, headings, or formatted text. Does NOT capture any user input."
+          }
+        },
+        "name": {
+          "type": "string",
+          "description": "Unique field identifier for this question. Used as the key in survey response data and referenced in field mappings and visibleIf expressions. Must be unique across the entire survey. Use snake_case, e.g. 'employee_name', 'start_date'. Must start with a letter. No spaces.",
+          "pattern": "^[a-zA-Z][a-zA-Z0-9_]*$"
+        },
+        "title": {
+          "type": "string",
+          "description": "The question label shown to the user. Required for all question types except 'html'. Should be a clear, concise question or prompt, e.g. 'Full Name', 'What is your start date?'."
+        },
+        "description": {
+          "type": "string",
+          "description": "Additional help text shown below the question title. Use this for clarification, examples, or formatting hints, e.g. 'Enter the date in DD/MM/YYYY format'."
+        },
+        "isRequired": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether the user must answer this question before proceeding. If true, the survey will not allow the user to move to the next page without completing this field."
+        },
+        "visibleIf": {
+          "$ref": "#/definitions/visibleIfExpression",
+          "description": "Expression controlling whether this question is shown. If the expression evaluates to false, the question is hidden and its value is not collected. See visibleIfExpression definition for syntax."
+        },
+        "placeholder": {
+          "type": "string",
+          "description": "Greyed-out hint text displayed inside the input box before the user types anything. Only applicable to 'text' and 'comment' types. Example: 'Enter your full legal name'."
+        },
+        "defaultValue": {
+          "description": "Pre-filled value for this question. The user can change it. For 'boolean' use true/false; for 'radiogroup'/'dropdown' use a string matching one of the choices; for 'checkbox' use an array of strings."
+        },
+        "inputType": {
+          "type": "string",
+          "description": "Only applicable when type is 'text'. Constrains the input to a specific format and renders an appropriate browser widget. Defaults to plain text input.",
+          "enum": ["text", "number", "date", "datetime-local", "time", "email", "tel", "url", "color", "month", "week"],
+          "enumDescriptions": {
+            "text": "Default — plain single-line text input.",
+            "number": "Numeric input. Stores the value as a number. Use for salary amounts, ages, counts.",
+            "date": "Date picker. Stores value as a string in YYYY-MM-DD format.",
+            "datetime-local": "Date and time picker.",
+            "time": "Time picker.",
+            "email": "Email address input with basic format validation.",
+            "tel": "Telephone number input.",
+            "url": "URL input with basic format validation.",
+            "color": "Colour picker.",
+            "month": "Month and year picker.",
+            "week": "Week and year picker."
+          }
+        },
+        "choices": {
+          "type": "array",
+          "description": "The list of options for 'radiogroup', 'dropdown', and 'checkbox' types. Each item can be a plain string (where the display text and stored value are the same) or an object with separate 'value' and 'text' fields. Order is preserved in rendering.",
+          "items": {
+            "oneOf": [
+              {
+                "type": "string",
+                "description": "Plain string — used as both the stored value and the display label."
+              },
+              {
+                "type": "object",
+                "description": "Object with separate stored value and display label.",
+                "required": ["value", "text"],
+                "additionalProperties": false,
+                "properties": {
+                  "value": {
+                    "type": "string",
+                    "description": "The value stored in survey responses when this option is selected. Should be a stable, code-safe string, e.g. 'full_time'."
+                  },
+                  "text": {
+                    "type": "string",
+                    "description": "The human-readable label shown to the user, e.g. 'Full-time employment'."
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "html": {
+          "type": "string",
+          "description": "Only applicable when type is 'html'. Raw HTML string rendered as static content. Can contain headings, paragraphs, bold text, links, etc. Must be valid HTML. The 'name' field is still required for 'html' elements but is not displayed."
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "type": { "const": "html" } } },
+          "then": {
+            "required": ["html"],
+            "properties": {
+              "html": { "minLength": 1 }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": { "enum": ["radiogroup", "dropdown", "checkbox"] }
+            }
+          },
+          "then": {
+            "required": ["choices"],
+            "properties": {
+              "choices": { "minItems": 1 }
+            }
+          }
+        }
+      ]
+    },
+    "visibleIfExpression": {
+      "type": "string",
+      "description": "A conditional expression that controls visibility. The element is shown when the expression evaluates to true, hidden when false. The expression references other question values using {fieldName} syntax. Supported forms: (1) '{fieldName}' — true if fieldName has a truthy value (non-empty string, true, non-zero number, non-empty array). (2) '!{fieldName}' — true if fieldName is falsy. (3) '{fieldName} = value' — equality check; use 'true'/'false' for booleans, unquoted strings for text/choice values, e.g. '{employment_type} = Contract'. (4) '{fieldName} <> value' — inequality check. (5) '{fieldName} = true' or '{fieldName} = false' — boolean check for boolean-type questions. Note: use single '=' for equality (Survey.js expression syntax, not JavaScript). Examples: '{is_remote} = false', '{employment_type} = Full-time', '{has_benefits}'.",
+      "examples": [
+        "{is_salary_based} = true",
+        "{is_salary_based} = false",
+        "{employment_type} = Contract",
+        "{has_benefits}",
+        "!{is_remote}",
+        "{annual_salary} <> 0"
+      ]
+    }
+  },
+  "examples": [
+    {
+      "title": "Example: Employment Contract Survey",
+      "description": "Collect information needed to generate an employment contract.",
+      "pages": [
+        {
+          "name": "basicInfo",
+          "title": "Basic Information",
+          "elements": [
+            {
+              "type": "text",
+              "name": "employee_name",
+              "title": "Full Name",
+              "isRequired": true,
+              "placeholder": "Enter your full legal name"
+            },
+            {
+              "type": "text",
+              "name": "start_date",
+              "title": "Start Date",
+              "inputType": "date",
+              "isRequired": true
+            },
+            {
+              "type": "radiogroup",
+              "name": "employment_type",
+              "title": "Employment Type",
+              "isRequired": true,
+              "choices": ["Full-time", "Part-time", "Contract"]
+            },
+            {
+              "type": "boolean",
+              "name": "is_salary_based",
+              "title": "Is this a salaried position?",
+              "isRequired": true
+            },
+            {
+              "type": "text",
+              "name": "annual_salary",
+              "title": "Annual Salary",
+              "inputType": "number",
+              "visibleIf": "{is_salary_based} = true",
+              "placeholder": "Enter annual salary amount"
+            },
+            {
+              "type": "checkbox",
+              "name": "benefits",
+              "title": "Select applicable benefits",
+              "visibleIf": "{is_salary_based} = true",
+              "choices": ["Health Insurance", "Dental", "401k"]
+            },
+            {
+              "type": "comment",
+              "name": "job_responsibilities",
+              "title": "Job Responsibilities",
+              "placeholder": "Describe the main duties and responsibilities..."
+            },
+            {
+              "type": "html",
+              "name": "note_section",
+              "html": "<p><strong>Note:</strong> All information will be kept confidential.</p>"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -115,6 +115,8 @@ The application follows a modular service-oriented design:
 - **[TESTING-CHECKLIST.md](TESTING-CHECKLIST.md)**: Testing procedures
 - **[TESTING-SETUP.md](TESTING-SETUP.md)**: Testing infrastructure guide
 - **[TEMPLATE-TROUBLESHOOTING.md](TEMPLATE-TROUBLESHOOTING.md)**: Template creation troubleshooting
+- **[DOCASSEMBLE-MIGRATION.md](DOCASSEMBLE-MIGRATION.md)**: Guide for porting Docassemble interviews, including field type mappings, conditional logic translation, and an LLM conversion prompt
+- **[docs/survey-schema.json](docs/survey-schema.json)**: JSON Schema (draft-07) for survey definition files — use for validation, IDE autocomplete, and as LLM context when editing surveys
 
 ## Browser Support
 
